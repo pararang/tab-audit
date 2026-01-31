@@ -17,12 +17,21 @@ A Chrome extension that automatically audits and closes browser tabs to free mem
 
 ## Installation
 
+### From GitHub Releases (Recommended)
+
+1. Download the latest `tab-audit.zip` from [GitHub Releases](https://github.com/pararang/tab-audit/releases).
+2. Extract the ZIP file to a folder on your computer.
+3. Load in Chrome:
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable **Developer mode** (toggle in the top-right corner).
+   - Click **Load unpacked** and select the folder where you extracted the ZIP.
+
 ### From Source
 
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/pararang/tab-audit.git
    cd tab-audit
    ```
 
@@ -35,13 +44,13 @@ A Chrome extension that automatically audits and closes browser tabs to free mem
 3. Build the extension:
 
    ```bash
-   npm run build
+   npm run build:prod
    ```
 
 4. Load in Chrome:
    - Open Chrome and navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in the top-right corner)
-   - Click "Load unpacked" and select the `dist/` folder
+   - Enable **Developer mode** (toggle in the top-right corner).
+   - Click **Load unpacked** and select the `dist/` folder inside the project.
 
 ### From Chrome Web Store
 
