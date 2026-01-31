@@ -39,4 +39,4 @@ jobs:
           dist/**
         draft: false
         prerelease: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
