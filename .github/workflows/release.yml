@@ -36,9 +36,7 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        files: |
-          tab-audit.zip
-          dist/**
+        files: tab-audit.zip
         draft: false
         prerelease: false
         token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
