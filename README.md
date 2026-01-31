@@ -3,6 +3,9 @@
 [![CI](https://github.com/pararang/tab-audit/workflows/CI/badge.svg)](https://github.com/pararang/tab-audit/actions)
 [![codecov](https://codecov.io/gh/pararang/tab-audit/branch/main/graph/badge.svg)](https://codecov.io/gh/pararang/tab-audit)
 
+> [!WARNING]
+> This extension was developed with assistance from artificial intelligence tools. DYOR.
+
 A Chrome extension that automatically audits and closes browser tabs to free memory. Keep your browser organized and save memory by closing inactive, duplicate, or excess tabs based on customizable rules.
 
 ## Features
@@ -225,10 +228,6 @@ bd show <issue-id>
 6. Run linter and formatter before committing
 7. Write descriptive commit messages explaining "why" not just "what"
 8. Close issues with `bd close <issue-id>` when complete
-
-## AI Assistance Disclaimer
-
-This extension was developed with assistance from artificial intelligence tools. DYOR.
 
 ## License
 
