@@ -39,4 +39,6 @@ jobs:
         files: tab-audit.zip
         draft: false
         prerelease: false
+        make_latest: true
+        overwrite: true
         token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
