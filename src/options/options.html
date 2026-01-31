@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tab Clean Settings</title>
+    <link rel="stylesheet" href="options.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="layout">
+      <nav class="sidebar">
+        <div class="brand">
+          <img src="../icons/icon48.png" alt="Logo" />
+          <span>Tab Clean</span>
+        </div>
+        <ul class="nav-links">
+          <li class="active"><a href="#general">General Settings</a></li>
+          <li><a href="#rules">Cleanup Rules</a></li>
+          <li><a href="#advanced">Advanced</a></li>
+        </ul>
+      </nav>
+
+      <main class="content">
+        <header>
+          <h1>Settings</h1>
+          <p>Configure how Tab Clean manages your browser tabs.</p>
+        </header>
+
+        <form id="options-form" class="settings-form">
+          <section id="general" class="card">
+            <h2>General Configuration</h2>
+
+            <div class="field">
+              <label for="theme">Theme</label>
+              <select id="theme">
+                <option value="system">System Default</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="idle-timeout">
+                Idle Timeout (minutes)
+                <span class="hint">Tabs inactive for longer than this will be closed.</span>
+              </label>
+              <input type="number" id="idle-timeout" min="1" required />
+            </div>
+
+            <div class="field">
+              <label for="max-tabs">
+                Max Tabs Limit
+                <span class="hint">Keep only this many recently active tabs.</span>
+              </label>
+              <input type="number" id="max-tabs" min="5" required />
+            </div>
+
+            <div class="field checkbox">
+              <input type="checkbox" id="notifications-enabled" />
+              <label for="notifications-enabled">Show notifications when tabs are closed</label>
+            </div>
+          </section>
+
+          <section id="rules" class="card">
+            <h2>Cleanup Rules</h2>
+
+            <div class="field">
+              <label for="whitelist">
+                Whitelist (one per line)
+                <span class="hint">Domains that will NEVER be closed automatically.</span>
+              </label>
+              <textarea id="whitelist" placeholder="example.com&#10;google.com" rows="4"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="blacklist">
+                Blacklist (one per line)
+                <span class="hint"
+                  >Domains that will ALWAYS be closed after becoming inactive.</span
+                >
+              </label>
+              <textarea
+                id="blacklist"
+                placeholder="facebook.com&#10;reddit.com"
+                rows="4"
+              ></textarea>
+            </div>
+          </section>
+
+          <section id="advanced" class="card">
+            <h2>Backup & Restore</h2>
+
+            <div class="field">
+              <p style="margin-bottom: 16px; color: var(--text-muted)">
+                Export your settings to a JSON file or import from a backup.
+              </p>
+
+              <div style="display: flex; gap: 12px">
+                <button type="button" id="backup-btn" class="btn-secondary">Export Settings</button>
+                <button type="button" id="restore-btn" class="btn-secondary">
+                  Import Settings
+                </button>
+              </div>
+              <input type="file" id="restore-file" accept=".json" style="display: none" />
+            </div>
+          </section>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Settings</button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>

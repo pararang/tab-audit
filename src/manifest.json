@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Auditor",
+  "version": "1.0.0",
+  "description": "Chrome extension that automatically audits and closes tabs to free memory: idle timeout, duplicate detection, domain filtering, and tab limits",
+  "permissions": ["tabs", "storage", "notifications", "alarms", "activeTab"],
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_page": "options/options.html",
+  "commands": {
+    "run-cleanup": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+C",
+        "mac": "Command+Shift+C"
+      },
+      "description": "Run manual tab audit"
+    },
+    "toggle-clean": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "Command+Shift+T"
+      },
+      "description": "Toggle auto-audit enabled/disabled"
+    }
+  }
+}

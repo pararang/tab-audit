@@ -1,0 +1,55 @@
+{
+  "name": "tab-audit",
+  "version": "1.0.0",
+  "description": "Chrome extension that automatically audits and closes tabs to free memory: idle timeout, duplicate detection, domain filtering, and tab limits",
+  "scripts": {
+    "build": "webpack --mode=development",
+    "build:prod": "webpack --mode=production",
+    "dev": "webpack --mode=development --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format:check": "prettier --check src/**/*.{ts,js,css,html}",
+    "format": "prettier --write src/**/*.{ts,js,css,html}",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest ui",
+    "test:coverage": "vitest run --coverage",
+    "package": "npm run build:prod && cd dist && zip -r ../tab-audit.zip ."
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.32",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
+    "@vitest/browser": "^4.0.17",
+    "@vitest/coverage-v8": "^4.0.17",
+    "@vitest/ui": "^4.0.17",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^8.53.0",
+    "happy-dom": "^20.3.0",
+    "prettier": "^3.0.3",
+    "sharp": "^0.34.5",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.2.2",
+    "vitest": "^4.0.17",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "keywords": [
+    "chrome-extension",
+    "tab-management",
+    "memory",
+    "browser",
+    "productivity",
+    "tab-cleanup",
+    "tab-auditor",
+    "automation",
+    "duplicate-tabs",
+    "idle-tabs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
