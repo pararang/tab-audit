@@ -3,8 +3,9 @@ import type { NotificationOptions, NotificationsPort } from '../../core/ports/no
 export class NoopNotificationsAdapter implements NotificationsPort {
   private notifications: NotificationOptions[] = [];
 
-  async create(options: NotificationOptions): Promise<void> {
+  async create(options: NotificationOptions): Promise<string> {
     this.notifications.push(options);
+    return '';
   }
 
   getNotifications(): NotificationOptions[] {
