@@ -2,6 +2,6 @@ import type { NotificationOptions, NotificationsPort } from '../../core/ports/no
 
 export class ChromeNotificationsAdapter implements NotificationsPort {
   async create(options: NotificationOptions): Promise<void> {
-    return chrome.notifications.create(options as unknown as chrome.notifications.NotificationOptions);
+    return chrome.notifications.create(options as unknown as chrome.notifications.NotificationCreateOptions);
   }
 }
