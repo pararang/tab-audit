@@ -7,8 +7,6 @@ import {
   getLastActivity,
   removeTabActivity,
   resetTabActivityMap,
-  getDomain,
-  domainMatches,
   getDuplicateTabs,
   applyCleanupRules,
   setWarningIcon,
@@ -16,6 +14,7 @@ import {
   handleStorageChanged,
   handleCommand,
 } from './index';
+import { getDomain, domainMatches } from '../shared/domain';
 
 // Need to import applyCleanupRules for testing
 // Re-import to get applyCleanupRules

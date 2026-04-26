@@ -1,4 +1,5 @@
 import { getSettings, saveSettings } from '../shared/settings';
+import { getDomain, domainMatches } from '../shared/domain';
 
 // Store last activity timestamps for each tab (tabId -> timestamp)
 const tabActivityMap: Map<number, number> = new Map();
@@ -39,38 +40,6 @@ export function getLastActivity(tab: chrome.tabs.Tab): number {
  */
 export function removeTabActivity(tabId: number): void {
   tabActivityMap.delete(tabId);
-}
-
-/**
- * Extracts the domain from a URL.
- * @param url - The URL to parse (undefined returns empty string)
- * @returns The hostname, or empty string if invalid
- */
-export function getDomain(url: string | undefined): string {
-  if (!url) return '';
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return '';
-  }
-}
-
-/**
- * Checks if a domain matches a pattern (exact or subdomain match).
- * @param domain - The domain to check
- * @param pattern - The pattern to match against
- * @returns True if domain matches pattern
- * @example domainMatches('mail.google.com', 'google.com') // true
- * @example domainMatches('google.com', 'google.com') // true
- * @example domainMatches('fakegoogle.com', 'google.com') // false
- */
-export function domainMatches(domain: string, pattern: string): boolean {
-  if (!domain || !pattern) return false;
-  // Exact match
-  if (domain === pattern) return true;
-  // Subdomain match (e.g., "mail.google.com" matches "google.com")
-  if (domain.endsWith('.' + pattern)) return true;
-  return false;
 }
 
 // Set warning icon (yellow when warning is active)
