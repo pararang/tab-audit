@@ -8,5 +8,5 @@ export interface NotificationOptions {
 }
 
 export interface NotificationsPort {
-  create(options: NotificationOptions): Promise<void>;
+  create(options: NotificationOptions): Promise<string>;
 }
