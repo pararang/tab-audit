@@ -14,7 +14,6 @@ export class InMemoryStorageAdapter implements StoragePort {
   }
 
   async saveSettings(settings: Partial<Settings>): Promise<void> {
-    const oldSettings = { ...this.settings };
     this.settings = { ...this.settings, ...settings };
     this.listeners.forEach((listener) => {
       listener(settings as Record<string, unknown>, 'local');

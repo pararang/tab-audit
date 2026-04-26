@@ -8,6 +8,10 @@ import { ChromeTabsAdapter } from '../adapters/chrome/tabs.adapter';
 import { ChromeNotificationsAdapter } from '../adapters/chrome/notifications.adapter';
 import { ChromeActionsAdapter } from '../adapters/chrome/actions.adapter';
 import { ChromeRuntimeAdapter, ChromeCommandsAdapter, ChromeAlarmsAdapter } from '../adapters/chrome/events.adapter';
+import { InMemoryStorageAdapter } from '../adapters/memory/storage.adapter';
+import { InMemoryTabsAdapter } from '../adapters/memory/tabs.adapter';
+import { NoopNotificationsAdapter } from '../adapters/memory/notifications.adapter';
+import { NoopActionsAdapter } from '../adapters/memory/actions.adapter';
 import type { Settings } from '../shared/settings';
 
 export interface Platform {
@@ -32,12 +36,7 @@ export function createPlatform(): Platform {
   };
 }
 
-export function createTestPlatform(defaultSettings: Settings, initialTabs: Parameters<typeof import('../adapters/memory/tabs.adapter').InMemoryTabsAdapter>[0] = []): Platform {
-  const { InMemoryStorageAdapter } = require('../adapters/memory/storage.adapter');
-  const { InMemoryTabsAdapter } = require('../adapters/memory/tabs.adapter');
-  const { NoopNotificationsAdapter } = require('../adapters/memory/notifications.adapter');
-  const { NoopActionsAdapter } = require('../adapters/memory/actions.adapter');
-
+export function createTestPlatform(defaultSettings: Settings, initialTabs: Parameters<typeof InMemoryTabsAdapter>[0] = []): Platform {
   return {
     storage: new InMemoryStorageAdapter(defaultSettings),
     tabs: new InMemoryTabsAdapter(initialTabs),

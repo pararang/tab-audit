@@ -11,7 +11,7 @@ export class InMemoryTabsAdapter implements TabsPort {
     this.tabs = [...tabs];
   }
 
-  async query(filter: TabFilter | {}): Promise<Tab[]> {
+  async query(_filter: TabFilter | object): Promise<Tab[]> {
     return [...this.tabs];
   }
 
