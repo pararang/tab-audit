@@ -1,7 +1,7 @@
 import type { TabFilter, Tab, TabsPort } from '../../core/ports/tabs.port';
 
 export class ChromeTabsAdapter implements TabsPort {
-  async query(filter: TabFilter | object): Promise<Tab[]> {
+  async query(filter: TabFilter): Promise<Tab[]> {
     return chrome.tabs.query(filter as chrome.tabs.QueryInfo) as Promise<Tab[]>;
   }
 

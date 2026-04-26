@@ -25,7 +25,7 @@ export interface Tab {
 }
 
 export interface TabsPort {
-  query(filter: TabFilter | object): Promise<Tab[]>;
+  query(filter: TabFilter): Promise<Tab[]>;
   remove(tabIds: number[]): Promise<void>;
   onActivated(callback: (tabId: number) => void): void;
   onUpdated(callback: (tabId: number, changeInfo: Record<string, unknown>) => void): void;
