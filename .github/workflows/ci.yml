@@ -31,7 +31,9 @@ jobs:
       run: npm run lint
       
     - name: Check code formatting
-      run: npm run format:check
+      run: |
+        npm run format:write
+        npm run format:check
       
     - name: Run tests with coverage
       run: npx vitest run --coverage
