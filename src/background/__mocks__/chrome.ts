@@ -42,10 +42,16 @@ const mockChrome = {
     },
   },
   action: {
-    setIcon: vi.fn(() => Promise.resolve()),
+    setIcon: vi.fn((options, callback) => {
+      if (callback) callback();
+      return Promise.resolve();
+    }),
   },
   notifications: {
-    create: vi.fn(),
+    create: vi.fn((options, callback) => {
+      if (callback) callback();
+      return Promise.resolve('mock-notification-id');
+    }),
   },
   storage: {
     local: {

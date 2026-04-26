@@ -55,11 +55,14 @@ export async function setWarningIcon(enable: boolean): Promise<void> {
         48: chrome.runtime.getURL('icons/icon48.png'),
         128: chrome.runtime.getURL('icons/icon128.png'),
       };
-  try {
-    await chrome.action.setIcon({ path: iconPath });
-  } catch (error) {
-    console.error('Error setting icon:', error);
-  }
+  await new Promise<void>((resolve) => {
+    chrome.action.setIcon({ path: iconPath }, () => {
+      if (chrome.runtime.lastError) {
+        console.warn('setIcon error:', chrome.runtime.lastError.message);
+      }
+      resolve();
+    });
+  });
 }
 
 // Initialize activity tracking for all existing tabs on startup
@@ -147,12 +150,19 @@ export async function applyCleanupRules() {
         warningActive = true;
         await setWarningIcon(true);
         if (notificationsEnabled) {
-          chrome.notifications.create({
-            type: 'basic',
-            iconUrl: chrome.runtime.getURL('icons/icon128.png'),
-            title: 'Tab Warning',
-            message: `You have ${allTabs.length} tabs open (limit: ${maxTabs}). Consider closing some tabs.`,
-          });
+          chrome.notifications.create(
+            {
+              type: 'basic',
+              iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+              title: 'Tab Warning',
+              message: `You have ${allTabs.length} tabs open (limit: ${maxTabs}). Consider closing some tabs.`,
+            },
+            () => {
+              if (chrome.runtime.lastError) {
+                console.warn('Notification error:', chrome.runtime.lastError.message);
+              }
+            }
+          );
         }
       }
     } else if (allTabs.length < warningThreshold && warningActive) {
@@ -224,12 +234,19 @@ export async function applyCleanupRules() {
       console.log('Closed tabs:', finalIdsToClose);
 
       if (notificationsEnabled) {
-        chrome.notifications.create({
-          type: 'basic',
-          iconUrl: chrome.runtime.getURL('icons/icon128.png'),
-          title: 'Tabs Cleaned',
-          message: `Automatically closed ${finalIdsToClose.length} inactive tab(s).`,
-        });
+        chrome.notifications.create(
+          {
+            type: 'basic',
+            iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+            title: 'Tabs Cleaned',
+            message: `Automatically closed ${finalIdsToClose.length} inactive tab(s).`,
+          },
+          () => {
+            if (chrome.runtime.lastError) {
+              console.warn('Notification error:', chrome.runtime.lastError.message);
+            }
+          }
+        );
       }
     }
   } catch (error) {
