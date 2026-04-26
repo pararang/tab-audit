@@ -14,7 +14,7 @@ export class ChromeTabsAdapter implements TabsPort {
   }
 
   onUpdated(callback: (tabId: number, changeInfo: Record<string, unknown>) => void): void {
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => callback(tabId, changeInfo));
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => callback(tabId, changeInfo as unknown as Record<string, unknown>));
   }
 
   onCreated(callback: (tab: Tab) => void): void {

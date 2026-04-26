@@ -1,6 +1,6 @@
 export interface NotificationOptions {
   type: 'basic' | 'image' | 'list' | 'progress';
-  iconUrl?: string;
+  iconUrl: string;
   title: string;
   message: string;
   priority?: number;
