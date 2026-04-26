@@ -1,5 +1,5 @@
 import type { StoragePort } from '../core/ports/storage.port';
-import type { TabsPort } from '../core/ports/tabs.port';
+import type { Tab, TabsPort } from '../core/ports/tabs.port';
 import type { NotificationsPort } from '../core/ports/notifications.port';
 import type { ActionsPort } from '../core/ports/actions.port';
 import type { RuntimePort, CommandsPort, AlarmsPort } from '../core/ports/events.port';
@@ -36,7 +36,7 @@ export function createPlatform(): Platform {
   };
 }
 
-export function createTestPlatform(defaultSettings: Settings, initialTabs: Parameters<typeof InMemoryTabsAdapter>[0] = []): Platform {
+export function createTestPlatform(defaultSettings: Settings, initialTabs: Tab[] = []): Platform {
   return {
     storage: new InMemoryStorageAdapter(defaultSettings),
     tabs: new InMemoryTabsAdapter(initialTabs),
