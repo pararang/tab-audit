@@ -11,6 +11,7 @@ import {
   updateButton,
   handleToggle,
   initPopup,
+  generateQRCode,
   PopupElements,
 } from './popup';
 
@@ -43,6 +44,35 @@ vi.stubGlobal('document', {
   documentElement: mockDocumentElement,
   getElementById: mockGetElementById,
   addEventListener: mockAddEventListener,
+  createElement: vi.fn((tag) => ({
+    tagName: tag.toUpperCase(),
+    textContent: '',
+    className: '',
+    setAttribute: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    appendChild: vi.fn(),
+    querySelector: vi.fn(),
+    querySelectorAll: vi.fn(() => []),
+    style: {},
+    clientWidth: 100,
+    clientHeight: 100,
+    getContext: vi.fn(() => ({
+      fillRect: vi.fn(),
+      fillText: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      rect: vi.fn(),
+      clearRect: vi.fn(),
+      createImageData: vi.fn(() => ({
+        data: new Uint8ClampedArray(100),
+      })),
+      putImageData: vi.fn(),
+      scale: vi.fn(),
+    })),
+  })),
 });
 
 // Mock chrome.runtime.openOptionsPage
@@ -520,5 +550,159 @@ describe('initPopup', () => {
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
     // @ts-expect-error - chrome is mocked
     expect(chrome.storage.local.get).toHaveBeenCalled();
+  });
+});
+
+describe('generateQRCode', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return early when qrCanvas is missing', async () => {
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: document.createElement('div'),
+    };
+
+    await generateQRCode(elements);
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.query).not.toHaveBeenCalled();
+  });
+
+  it('should return early when qrUrl is missing', async () => {
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: document.createElement('canvas'),
+      qrUrl: null as unknown as HTMLElement,
+    };
+
+    await generateQRCode(elements);
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.query).not.toHaveBeenCalled();
+  });
+
+  it('should show message for chrome:// URLs', async () => {
+    const qrUrl = document.createElement('div');
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: document.createElement('canvas'),
+      qrUrl,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([{ url: 'chrome://settings' }]);
+
+    await generateQRCode(elements);
+    expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
+  });
+
+  it('should show message for chrome-extension:// URLs', async () => {
+    const qrUrl = document.createElement('div');
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: document.createElement('canvas'),
+      qrUrl,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([{ url: 'chrome-extension://abcdefghijk/lmnop.html' }]);
+
+    await generateQRCode(elements);
+    expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
+  });
+
+  it('should generate QR code and show URL for valid tab', async () => {
+    const qrCanvas = document.createElement('canvas');
+    const qrUrl = document.createElement('div');
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas,
+      qrUrl,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([{ url: 'https://example.com/page' }]);
+
+    await generateQRCode(elements);
+    expect(qrUrl.textContent).toBe('https://example.com/page');
+  });
+
+  it('should truncate long URLs', async () => {
+    const qrUrl = document.createElement('div');
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: document.createElement('canvas'),
+      qrUrl,
+    };
+
+    const longUrl = 'https://example.com/very/long/path/with/many/segments/and/query/parameters?foo=bar&baz=qux';
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([{ url: longUrl }]);
+
+    await generateQRCode(elements);
+    expect(qrUrl.textContent).toBe('https://example.com/very/long/path/with/...');
+  });
+
+  it('should handle missing tab gracefully', async () => {
+    const qrUrl = document.createElement('div');
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: document.createElement('canvas'),
+      qrUrl,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([]);
+
+    await generateQRCode(elements);
+    expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
+  });
+
+  it('should handle tabs without URL gracefully', async () => {
+    const qrUrl = document.createElement('div');
+    const elements = {
+      tabCount: document.createElement('div'),
+      cleanedCount: document.createElement('div'),
+      topDomain: document.createElement('div'),
+      toggleButton: document.createElement('button'),
+      settingsButton: null,
+      qrCanvas: document.createElement('canvas'),
+      qrUrl,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([{ url: undefined }]);
+
+    await generateQRCode(elements);
+    expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
   });
 });
