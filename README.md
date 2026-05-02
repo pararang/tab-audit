@@ -17,6 +17,7 @@ A Chrome extension that automatically audits and closes browser tabs to free mem
 - **Activity Tracking** - Robust tab activity detection that resets the idle timer when you interact with tabs
 - **Notifications** - Get notified when tabs are automatically closed
 - **Manual Cleanup** - Trigger cleanup on demand from the popup
+- **QR Code Generation** - Generate QR codes for the current page to easily share or open on other devices
 
 ## Installation
 
@@ -173,14 +174,19 @@ npm run test:coverage
 
 ```
 src/
+├── adapters/         # External system adapters
 ├── background/       # Service worker (main logic)
 │   └── index.ts      # Tab cleanup rules, activity tracking
-├── popup/            # Browser action popup UI
+├── core/             # Business logic layer
+├── icons/            # Extension icons
 ├── options/          # Extension options page
+├── platform/         # Platform-specific code
+├── popup/            # Browser action popup UI
 ├── shared/           # Shared code
 │   ├── settings.ts   # Settings interface and storage
 │   ├── types.ts      # TypeScript interfaces
 │   ├── constants.ts  # Shared constants
+│   ├── domain.ts     # Domain parsing utilities
 │   └── utils.ts      # Utility functions
 └── manifest.json     # Chrome extension manifest (V3)
 ```
