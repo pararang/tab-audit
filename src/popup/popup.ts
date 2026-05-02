@@ -1,4 +1,5 @@
 import { getSettings, saveSettings } from '../shared/settings';
+import QRCode from 'qrcode';
 
 /**
  * Applies the theme to the document.
@@ -74,6 +75,8 @@ export interface PopupElements {
   topDomain: HTMLElement;
   toggleButton: HTMLButtonElement;
   settingsButton: HTMLButtonElement | null;
+  qrCanvas: HTMLCanvasElement;
+  qrUrl: HTMLElement;
 }
 
 /**
@@ -86,6 +89,8 @@ export function getPopupElements(): PopupElements | null {
   const topDomain = document.getElementById('top-domain') as HTMLElement;
   const toggleButton = document.getElementById('toggle-clean') as HTMLButtonElement;
   const settingsButton = document.getElementById('open-settings') as HTMLButtonElement | null;
+  const qrCanvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
+  const qrUrl = document.getElementById('qr-url') as HTMLElement;
 
   if (!tabCount || !cleanedCount || !topDomain || !toggleButton) {
     return null;
@@ -97,6 +102,8 @@ export function getPopupElements(): PopupElements | null {
     topDomain,
     toggleButton,
     settingsButton,
+    qrCanvas,
+    qrUrl,
   };
 }
 
@@ -137,6 +144,40 @@ export function updateButton(elements: PopupElements, enabled: boolean): void {
 }
 
 /**
+ * Generates and displays QR code for the active tab's URL.
+ * @param elements - Popup elements including QR canvas and URL container
+ */
+export async function generateQRCode(elements: PopupElements): Promise<void> {
+  if (!elements.qrCanvas || !elements.qrUrl) {
+    return;
+  }
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+      elements.qrUrl.textContent = 'Cannot generate QR for this page';
+      return;
+    }
+
+    await QRCode.toCanvas(elements.qrCanvas, tab.url, {
+      width: 150,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    });
+
+    const displayUrl = tab.url.length > 40 ? tab.url.substring(0, 40) + '...' : tab.url;
+    elements.qrUrl.textContent = displayUrl;
+  } catch (error) {
+    console.error('Failed to generate QR code:', error);
+    elements.qrUrl.textContent = 'Failed to generate QR code';
+  }
+}
+
+/**
  * Handles toggle button click.
  * @param elements - Popup elements
  */
@@ -170,6 +211,9 @@ export async function initPopup(): Promise<void> {
   // Update tab count and stats on load
   updateTabCount(elements);
   await updateStats(elements);
+
+  // Generate QR code for active tab
+  await generateQRCode(elements);
 
   // Toggle button click
   elements.toggleButton.addEventListener('click', async () => {
