@@ -212,9 +212,6 @@ export async function initPopup(): Promise<void> {
   updateTabCount(elements);
   await updateStats(elements);
 
-  // Generate QR code for active tab
-  await generateQRCode(elements);
-
   // Toggle button click
   elements.toggleButton.addEventListener('click', async () => {
     await handleToggle(elements);
@@ -223,6 +220,19 @@ export async function initPopup(): Promise<void> {
   // Settings button click
   elements.settingsButton?.addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
+  });
+
+  // QR code on demand — generate only when user expands the section
+  let qrGenerated = false;
+  const qrToggle = document.getElementById('qr-toggle');
+  qrToggle?.addEventListener('click', () => {
+    const section = qrToggle.closest('.qr-section');
+    if (!section) return;
+    const isExpanded = section.classList.toggle('expanded');
+    if (isExpanded && !qrGenerated) {
+      generateQRCode(elements);
+      qrGenerated = true;
+    }
   });
 }
 
