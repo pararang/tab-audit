@@ -32,6 +32,8 @@ export function isValidSettings(data: unknown): data is Partial<Settings> {
       settings.theme === 'system') &&
     (settings.whitelist === undefined || Array.isArray(settings.whitelist)) &&
     (settings.blacklist === undefined || Array.isArray(settings.blacklist)) &&
+    (settings.whitelistedTabGroups === undefined ||
+      Array.isArray(settings.whitelistedTabGroups)) &&
     (settings.notificationsEnabled === undefined ||
       typeof settings.notificationsEnabled === 'boolean')
   );
@@ -47,6 +49,7 @@ export interface OptionsFormElements {
   theme: HTMLSelectElement;
   whitelist: HTMLTextAreaElement;
   blacklist: HTMLTextAreaElement;
+  whitelistedTabGroups: HTMLTextAreaElement;
   notificationsEnabled: HTMLInputElement;
   backupBtn: HTMLButtonElement;
   restoreBtn: HTMLButtonElement;
@@ -64,6 +67,7 @@ export function getFormElements(): OptionsFormElements | null {
   const theme = document.getElementById('theme') as HTMLSelectElement;
   const whitelist = document.getElementById('whitelist') as HTMLTextAreaElement;
   const blacklist = document.getElementById('blacklist') as HTMLTextAreaElement;
+  const whitelistedTabGroups = document.getElementById('whitelisted-tab-groups') as HTMLTextAreaElement;
   const notificationsEnabled = document.getElementById('notifications-enabled') as HTMLInputElement;
   const backupBtn = document.getElementById('backup-btn') as HTMLButtonElement;
   const restoreBtn = document.getElementById('restore-btn') as HTMLButtonElement;
@@ -76,6 +80,7 @@ export function getFormElements(): OptionsFormElements | null {
     !theme ||
     !whitelist ||
     !blacklist ||
+    !whitelistedTabGroups ||
     !notificationsEnabled ||
     !backupBtn ||
     !restoreBtn ||
@@ -91,6 +96,7 @@ export function getFormElements(): OptionsFormElements | null {
     theme,
     whitelist,
     blacklist,
+    whitelistedTabGroups,
     notificationsEnabled,
     backupBtn,
     restoreBtn,
@@ -109,6 +115,7 @@ export async function loadSettingsToForm(elements: OptionsFormElements): Promise
   elements.theme.value = settings.theme;
   elements.whitelist.value = settings.whitelist.join('\n');
   elements.blacklist.value = settings.blacklist.join('\n');
+  elements.whitelistedTabGroups.value = settings.whitelistedTabGroups.join('\n');
   elements.notificationsEnabled.checked = settings.notificationsEnabled;
   applyTheme(settings.theme);
 }
@@ -129,6 +136,10 @@ export async function saveSettingsFromForm(elements: OptionsFormElements): Promi
       .map((d) => d.trim())
       .filter((d) => d),
     blacklist: elements.blacklist.value
+      .split('\n')
+      .map((d) => d.trim())
+      .filter((d) => d),
+    whitelistedTabGroups: elements.whitelistedTabGroups.value
       .split('\n')
       .map((d) => d.trim())
       .filter((d) => d),
@@ -197,6 +208,7 @@ export function bindEventListeners(elements: OptionsFormElements): void {
         ...data,
         whitelist: data.whitelist || [],
         blacklist: data.blacklist || [],
+        whitelistedTabGroups: data.whitelistedTabGroups || [],
       };
 
       await saveSettings(fullSettings);
@@ -207,6 +219,7 @@ export function bindEventListeners(elements: OptionsFormElements): void {
       elements.theme.value = fullSettings.theme;
       elements.whitelist.value = fullSettings.whitelist.join('\n');
       elements.blacklist.value = fullSettings.blacklist.join('\n');
+      elements.whitelistedTabGroups.value = fullSettings.whitelistedTabGroups.join('\n');
       elements.notificationsEnabled.checked = fullSettings.notificationsEnabled;
       applyTheme(fullSettings.theme);
 

@@ -336,6 +336,71 @@ describe('applyCleanupRules', () => {
     expect(chrome.tabs.remove).not.toHaveBeenCalled();
   });
 
+  it('should not close tabs in whitelisted tab groups', async () => {
+    const now = Date.now();
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.local.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 1,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      whitelistedTabGroups: ['Work'],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabGroups.query.mockResolvedValue([
+      { id: 10, title: 'Work', color: 'blue', collapsed: false, windowId: 1 },
+      { id: 20, title: 'Personal', color: 'green', collapsed: false, windowId: 1 },
+    ]);
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://work.com', groupId: 10, lastAccessed: now - 120000, active: false },
+      { id: 2, url: 'https://personal.com', groupId: 20, lastAccessed: now - 120000, active: false },
+      { id: 3, url: 'https://other.com', groupId: -1, lastAccessed: now - 120000, active: false },
+    ]);
+
+    await applyCleanupRules();
+
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.remove).toHaveBeenCalled();
+    // @ts-expect-error - chrome is mocked
+    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    // Tab 1 is in whitelisted 'Work' group - should NOT be closed
+    expect(removedTabs).not.toContain(1);
+    // Tab 3 has no group - should be closed (idle)
+    expect(removedTabs).toContain(3);
+  });
+
+  it('should not close tabs in whitelisted tab groups when over maxTabs', async () => {
+    const now = Date.now();
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.local.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 60,
+      maxTabs: 2,
+      whitelist: [],
+      blacklist: [],
+      whitelistedTabGroups: ['Work'],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabGroups.query.mockResolvedValue([
+      { id: 10, title: 'Work', color: 'blue', collapsed: false, windowId: 1 },
+    ]);
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://work.com', groupId: 10, lastAccessed: now - 5000, active: true },
+      { id: 2, url: 'https://work.com/page2', groupId: 10, lastAccessed: now - 10000, active: false },
+      { id: 3, url: 'https://other.com', lastAccessed: now - 15000, active: false },
+    ]);
+
+    await applyCleanupRules();
+
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.remove).toHaveBeenCalledWith([3]);
+  });
+
   it('should close tabs over maxTabs limit', async () => {
     // @ts-expect-error - chrome is mocked
     chrome.storage.local.get.mockResolvedValue({

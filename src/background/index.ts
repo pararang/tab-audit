@@ -135,13 +135,28 @@ export async function applyCleanupRules() {
     if (!settings.enabled) return;
 
     const idleTimeoutMs = settings.idleTimeout * 60 * 1000;
-    const { maxTabs, whitelist, blacklist, notificationsEnabled } = settings;
+    const { maxTabs, whitelist, blacklist, whitelistedTabGroups, notificationsEnabled } = settings;
 
     const tabsToClose = new Set<number>();
     const now = Date.now();
 
     // Get all tabs
     const allTabs = await chrome.tabs.query({});
+
+    // Get whitelisted tab group IDs
+    const whitelistedGroupIds = new Set<number>();
+    if (whitelistedTabGroups.length > 0) {
+      try {
+        const tabGroups = await chrome.tabGroups.query({});
+        for (const group of tabGroups) {
+          if (group.title && whitelistedTabGroups.includes(group.title)) {
+            whitelistedGroupIds.add(group.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error querying tab groups:', error);
+      }
+    }
 
     // Warning check: when tabs >= maxTabs - 2
     const warningThreshold = maxTabs - 2;
@@ -178,36 +193,40 @@ export async function applyCleanupRules() {
 
       const domain = getDomain(tab.url);
 
-      // 1. Whitelist check (skip whitelisted)
+      // 1. Tab group whitelist check (skip tabs in whitelisted groups)
+      if (tab.groupId && whitelistedGroupIds.has(tab.groupId)) return;
+
+      // 2. Domain whitelist check (skip whitelisted domains)
       if (whitelist.some((w) => domainMatches(domain, w))) return;
 
-      // 2. Blacklist check (always close if in blacklist and not active)
+      // 3. Blacklist check (always close if in blacklist and not active)
       if (blacklist.some((b) => domainMatches(domain, b))) {
         tabsToClose.add(tab.id);
         return;
       }
 
-      // 3. Idle timeout check (uses custom activity tracking)
+      // 4. Idle timeout check (uses custom activity tracking)
       const lastActivity = getLastActivity(tab);
       if (lastActivity && now - lastActivity > idleTimeoutMs) {
         tabsToClose.add(tab.id);
       }
     });
 
-    // 4. Duplicate tabs check
+    // 5. Duplicate tabs check
     const duplicates = getDuplicateTabs(allTabs);
     duplicates.forEach((id) => {
       // Re-verify it's not whitelisted or active (though getDuplicateTabs check URL, active tab might be one of them)
       const tab = allTabs.find((t) => t.id === id);
       if (tab && !tab.active) {
         const domain = getDomain(tab.url);
-        if (!whitelist.some((w) => domainMatches(domain, w))) {
+        const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
+        if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
           tabsToClose.add(id);
         }
       }
     });
 
-    // 5. Max tabs check (close oldest inactive until below limit)
+    // 6. Max tabs check (close oldest inactive until below limit)
     const currentClosingCount = tabsToClose.size;
     const remainingCount = allTabs.length - currentClosingCount;
 
@@ -219,7 +238,8 @@ export async function applyCleanupRules() {
         if (closedCount >= extraToClose) break;
         if (tab.id && !tab.active && !tabsToClose.has(tab.id)) {
           const domain = getDomain(tab.url);
-          if (!whitelist.some((w) => domainMatches(domain, w))) {
+          const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
+          if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
             tabsToClose.add(tab.id);
             closedCount++;
           }

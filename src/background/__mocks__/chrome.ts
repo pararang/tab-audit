@@ -25,6 +25,9 @@ const mockChrome = {
     },
     getURL: (path: string) => `chrome-extension://mock/${path}`,
   },
+  tabGroups: {
+    query: vi.fn(() => Promise.resolve([])),
+  },
   tabs: {
     query: vi.fn(() => Promise.resolve([])),
     remove: vi.fn(() => Promise.resolve()),

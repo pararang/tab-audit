@@ -12,6 +12,8 @@ export interface Settings {
   whitelist: string[];
   /** Blacklist of domain patterns to always close */
   blacklist: string[];
+  /** Whitelist of tab group names to never close */
+  whitelistedTabGroups: string[];
   /** Whether to show notifications when tabs are closed */
   notificationsEnabled: boolean;
   /** Whether the warning notification has been shown */
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: Settings = {
   maxTabs: 50,
   whitelist: [],
   blacklist: [],
+  whitelistedTabGroups: [],
   notificationsEnabled: true,
   warningShown: false,
   theme: 'system',

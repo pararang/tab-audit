@@ -250,6 +250,7 @@ describe('getFormElements', () => {
     const mockInput = {} as HTMLInputElement;
     const mockSelect = {} as HTMLSelectElement;
     const mockTextarea = {} as HTMLTextAreaElement;
+    const mockButton = {} as HTMLButtonElement;
 
     mockGetElementById.mockImplementation((id) => {
       const elements: Record<string, Element> = {
@@ -259,9 +260,10 @@ describe('getFormElements', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
-        'backup-btn': mockInput,
-        'restore-btn': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
         'restore-file': mockInput,
       };
       return elements[id] || null;
@@ -288,6 +290,7 @@ describe('loadSettingsToForm', () => {
       theme: { value: '' } as HTMLSelectElement,
       whitelist: { value: '' } as HTMLTextAreaElement,
       blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
       notificationsEnabled: { checked: false } as HTMLInputElement,
       backupBtn: {} as HTMLButtonElement,
       restoreBtn: {} as HTMLButtonElement,
@@ -302,6 +305,7 @@ describe('loadSettingsToForm', () => {
       theme: 'dark',
       whitelist: ['example.com', 'test.org'],
       blacklist: ['facebook.com'],
+      whitelistedTabGroups: ['Work'],
       notificationsEnabled: false,
     });
 
@@ -312,6 +316,7 @@ describe('loadSettingsToForm', () => {
     expect(mockElements.theme.value).toBe('dark');
     expect(mockElements.whitelist.value).toBe('example.com\ntest.org');
     expect(mockElements.blacklist.value).toBe('facebook.com');
+    expect(mockElements.whitelistedTabGroups.value).toBe('Work');
     expect(mockElements.notificationsEnabled.checked).toBe(false);
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -324,6 +329,7 @@ describe('loadSettingsToForm', () => {
       theme: { value: '' } as HTMLSelectElement,
       whitelist: { value: '' } as HTMLTextAreaElement,
       blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
       notificationsEnabled: { checked: true } as HTMLInputElement,
       backupBtn: {} as HTMLButtonElement,
       restoreBtn: {} as HTMLButtonElement,
@@ -356,6 +362,7 @@ describe('saveSettingsFromForm', () => {
       theme: { value: 'light' } as HTMLSelectElement,
       whitelist: { value: 'a.com\nb.com' } as HTMLTextAreaElement,
       blacklist: { value: 'c.com' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: 'Work\nResearch' } as HTMLTextAreaElement,
       notificationsEnabled: { checked: true } as HTMLInputElement,
       backupBtn: {} as HTMLButtonElement,
       restoreBtn: {} as HTMLButtonElement,
@@ -369,6 +376,7 @@ describe('saveSettingsFromForm', () => {
     expect(result.theme).toBe('light');
     expect(result.whitelist).toEqual(['a.com', 'b.com']);
     expect(result.blacklist).toEqual(['c.com']);
+    expect(result.whitelistedTabGroups).toEqual(['Work', 'Research']);
     expect(result.notificationsEnabled).toBe(true);
     expect(result.warningShown).toBe(false);
     // @ts-expect-error - chrome is mocked
@@ -384,6 +392,7 @@ describe('saveSettingsFromForm', () => {
       theme: { value: 'dark' } as HTMLSelectElement,
       whitelist: { value: 'a.com\n\nb.com\n  ' } as HTMLTextAreaElement,
       blacklist: { value: '\n\nc.com\n\n' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
       notificationsEnabled: { checked: true } as HTMLInputElement,
       backupBtn: {} as HTMLButtonElement,
       restoreBtn: {} as HTMLButtonElement,
@@ -433,6 +442,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -491,6 +501,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -558,6 +569,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -621,6 +633,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -689,6 +702,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -758,6 +772,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -825,6 +840,7 @@ describe('bindEventListeners', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
@@ -897,6 +913,7 @@ describe('initOptions', () => {
         theme: mockSelect,
         whitelist: mockTextarea,
         blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
         'notifications-enabled': mockInput,
         'backup-btn': mockButton,
         'restore-btn': mockButton,
