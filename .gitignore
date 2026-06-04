@@ -53,3 +53,6 @@ Thumbs.db
 *.temp
 
 AGENT*.md
+
+# Sisyphus planning artifacts
+.sisyphus/
