@@ -334,7 +334,7 @@ export function handleStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   namespace: string,
 ): void {
-  if (namespace === 'local') {
+  if (namespace === 'sync') {
     if (changes.maxTabs || changes.enabled) {
       warningActive = false;
       setWarningIcon(false).catch(() => {});

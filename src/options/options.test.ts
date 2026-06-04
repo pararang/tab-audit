@@ -298,7 +298,7 @@ describe('loadSettingsToForm', () => {
     };
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       idleTimeout: 45,
       maxTabs: 100,
@@ -337,7 +337,7 @@ describe('loadSettingsToForm', () => {
     };
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       theme: 'system',
     });
@@ -380,7 +380,7 @@ describe('saveSettingsFromForm', () => {
     expect(result.notificationsEnabled).toBe(true);
     expect(result.warningShown).toBe(false);
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.set).toHaveBeenCalled();
+    expect(chrome.storage.sync.set).toHaveBeenCalled();
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
@@ -517,7 +517,7 @@ describe('bindEventListeners', () => {
     });
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockRejectedValue(new Error('Storage error'));
+    chrome.storage.sync.get.mockRejectedValue(new Error('Storage error'));
 
     const elements = getFormElements();
     if (elements) {
@@ -857,7 +857,7 @@ describe('bindEventListeners', () => {
     });
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ ...DEFAULT_SETTINGS, theme: 'system' });
+    chrome.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS, theme: 'system' });
 
     const elements = getFormElements();
     if (elements) {
@@ -881,7 +881,7 @@ describe('initOptions', () => {
     await initOptions();
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.get).not.toHaveBeenCalled();
+    expect(chrome.storage.sync.get).not.toHaveBeenCalled();
   });
 
   it('should initialize when all form elements exist', async () => {
@@ -928,11 +928,11 @@ describe('initOptions', () => {
       addEventListener: vi.fn(),
     });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue(DEFAULT_SETTINGS);
+    chrome.storage.sync.get.mockResolvedValue(DEFAULT_SETTINGS);
 
     await initOptions();
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.get).toHaveBeenCalled();
+    expect(chrome.storage.sync.get).toHaveBeenCalled();
   });
 });

@@ -45,7 +45,7 @@ export const DEFAULT_SETTINGS: Settings = {
  */
 export async function getSettings(): Promise<Settings> {
   try {
-    const result = await chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS));
+    const result = await chrome.storage.sync.get(Object.keys(DEFAULT_SETTINGS));
     return { ...DEFAULT_SETTINGS, ...result };
   } catch (error) {
     console.error('Error getting settings:', error);
@@ -63,7 +63,7 @@ export async function getSettings(): Promise<Settings> {
  */
 export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   try {
-    await chrome.storage.local.set(settings);
+    await chrome.storage.sync.set(settings);
   } catch (error) {
     console.error('Error saving settings:', error);
   }

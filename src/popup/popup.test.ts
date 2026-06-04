@@ -466,9 +466,9 @@ describe('handleToggle', () => {
     };
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: false });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome.storage.sync.set.mockResolvedValue(undefined);
     // @ts-expect-error - chrome is mocked
     chrome.runtime.sendMessage.mockResolvedValue(undefined);
 
@@ -490,9 +490,9 @@ describe('handleToggle', () => {
     };
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: true });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome.storage.sync.set.mockResolvedValue(undefined);
 
     await handleToggle(mockElements);
 
@@ -516,7 +516,7 @@ describe('initPopup', () => {
     await initPopup();
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.get).not.toHaveBeenCalled();
+    expect(chrome.storage.sync.get).not.toHaveBeenCalled();
   });
 
   it('should initialize when all popup elements exist', async () => {
@@ -541,7 +541,7 @@ describe('initPopup', () => {
     });
 
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: true, theme: 'dark' });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: true, theme: 'dark' });
     // @ts-expect-error - chrome is mocked
     chrome.tabs.query.mockResolvedValue([]);
 
@@ -549,7 +549,7 @@ describe('initPopup', () => {
 
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.get).toHaveBeenCalled();
+    expect(chrome.storage.sync.get).toHaveBeenCalled();
   });
 });
 

@@ -317,7 +317,7 @@ describe('applyCleanupRules', () => {
 
   it('should not close any tabs when extension is disabled', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: false,
       idleTimeout: 30,
       maxTabs: 50,
@@ -339,7 +339,7 @@ describe('applyCleanupRules', () => {
   it('should not close tabs in whitelisted tab groups', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -375,7 +375,7 @@ describe('applyCleanupRules', () => {
   it('should not close tabs in whitelisted tab groups when over maxTabs', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 2,
@@ -403,7 +403,7 @@ describe('applyCleanupRules', () => {
 
   it('should close tabs over maxTabs limit', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 2,
@@ -430,7 +430,7 @@ describe('applyCleanupRules', () => {
   it('should not close whitelisted domains', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 50,
@@ -452,7 +452,7 @@ describe('applyCleanupRules', () => {
 
   it('should always close blacklisted domains', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 50,
@@ -475,7 +475,7 @@ describe('applyCleanupRules', () => {
   it('should close idle tabs beyond timeout', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 50,
@@ -502,7 +502,7 @@ describe('applyCleanupRules', () => {
   it('should not close active tab even if idle', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -523,7 +523,7 @@ describe('applyCleanupRules', () => {
 
   it('should handle empty tabs array', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -542,7 +542,7 @@ describe('applyCleanupRules', () => {
 
   it('should send notification when tabs are closed and notifications enabled', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 1,
@@ -565,7 +565,7 @@ describe('applyCleanupRules', () => {
   it('should combine multiple cleanup rules correctly', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 2,
@@ -596,7 +596,7 @@ describe('applyCleanupRules', () => {
   it('should match subdomains in whitelist', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -624,7 +624,7 @@ describe('applyCleanupRules', () => {
   it('should close tab with no URL', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -648,7 +648,7 @@ describe('applyCleanupRules', () => {
     // Suppress expected error output
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -666,7 +666,7 @@ describe('applyCleanupRules', () => {
 
   it('should handle notification creation error gracefully', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 1,
@@ -689,7 +689,7 @@ describe('applyCleanupRules', () => {
   it('should handle tabs at various idle times correctly', async () => {
     const now = Date.now();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 50,
@@ -873,7 +873,7 @@ describe('handleStorageChanged', () => {
     const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
     setIconSpy.mockResolvedValue(undefined);
 
-    handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'local');
+    handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'sync');
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.action.setIcon).toHaveBeenCalled();
@@ -883,7 +883,7 @@ describe('handleStorageChanged', () => {
     const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
     setIconSpy.mockResolvedValue(undefined);
 
-    handleStorageChanged({ enabled: { newValue: true, oldValue: false } }, 'local');
+    handleStorageChanged({ enabled: { newValue: true, oldValue: false } }, 'sync');
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.action.setIcon).toHaveBeenCalled();
@@ -892,15 +892,15 @@ describe('handleStorageChanged', () => {
   it('should not reset warning for other changes', () => {
     const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
 
-    handleStorageChanged({ whitelist: { newValue: ['a.com'], oldValue: [] } }, 'local');
+    handleStorageChanged({ whitelist: { newValue: ['a.com'], oldValue: [] } }, 'sync');
 
     expect(setIconSpy).not.toHaveBeenCalled();
   });
 
-  it('should not respond to non-local storage changes', () => {
+  it('should not respond to non-sync storage changes', () => {
     const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
 
-    handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'sync');
+    handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'local');
 
     expect(setIconSpy).not.toHaveBeenCalled();
   });
@@ -914,7 +914,7 @@ describe('handleCommand', () => {
 
   it('should run cleanup on run-cleanup command', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -933,26 +933,26 @@ describe('handleCommand', () => {
 
   it('should toggle enabled on toggle-clean command', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: false });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ enabled: true });
+    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: true });
   });
 
   it('should toggle enabled from true to false', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: true });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ enabled: false });
+    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: false });
   });
 
   it('should handle unknown commands gracefully', async () => {
@@ -1146,7 +1146,7 @@ describe('storage change warning reset', () => {
       maxTabs: { oldValue: 50, newValue: 100 },
     };
 
-    handleStorageChanged(changes, 'local');
+    handleStorageChanged(changes, 'sync');
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.action.setIcon).toHaveBeenCalled();
@@ -1157,7 +1157,7 @@ describe('storage change warning reset', () => {
       enabled: { oldValue: true, newValue: false },
     };
 
-    handleStorageChanged(changes, 'local');
+    handleStorageChanged(changes, 'sync');
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.action.setIcon).toHaveBeenCalled();
@@ -1168,18 +1168,18 @@ describe('storage change warning reset', () => {
       theme: { oldValue: 'light', newValue: 'dark' },
     };
 
-    handleStorageChanged(changes, 'local');
+    handleStorageChanged(changes, 'sync');
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.action.setIcon).not.toHaveBeenCalled();
   });
 
-  it('should not respond to non-local storage changes', () => {
+  it('should not respond to non-sync storage changes', () => {
     const changes = {
       maxTabs: { oldValue: 50, newValue: 100 },
     };
 
-    handleStorageChanged(changes, 'sync');
+    handleStorageChanged(changes, 'local');
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.action.setIcon).not.toHaveBeenCalled();
@@ -1193,7 +1193,7 @@ describe('command handling', () => {
 
   it('should run cleanup on run-cleanup command', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: true });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
 
     await handleCommand('run-cleanup');
 
@@ -1203,26 +1203,26 @@ describe('command handling', () => {
 
   it('should handle toggle-clean command from enabled to disabled', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: true });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ enabled: false });
+    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: false });
   });
 
   it('should handle toggle-clean command from disabled to enabled', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ enabled: false });
+    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
 
     // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ enabled: true });
+    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: true });
   });
 
   it('should handle unknown commands gracefully', async () => {
@@ -1237,7 +1237,7 @@ describe('applyCleanupRules edge cases', () => {
     resetTabActivityMap();
     vi.clearAllMocks();
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1252,7 +1252,7 @@ describe('applyCleanupRules edge cases', () => {
   it('should handle maxTabs of 0 (unlimited)', async () => {
     // Test that the function doesn't crash with maxTabs=0
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 0,
@@ -1271,7 +1271,7 @@ describe('applyCleanupRules edge cases', () => {
 
   it('should handle idleTimeout of 0 (immediately idle)', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 0,
       maxTabs: 50,
@@ -1293,7 +1293,7 @@ describe('applyCleanupRules edge cases', () => {
   it('should handle whitelist with special characters', async () => {
     // Test that the function doesn't crash with special characters in whitelist
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1314,7 +1314,7 @@ describe('applyCleanupRules edge cases', () => {
 
   it('should handle blacklist with special characters', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1337,7 +1337,7 @@ describe('applyCleanupRules edge cases', () => {
 
   it('should not close tabs when all tabs are whitelisted', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 5,
@@ -1359,7 +1359,7 @@ describe('applyCleanupRules edge cases', () => {
 
   it('should handle mixed whitelist and blacklist correctly', async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -1380,7 +1380,7 @@ describe('applyCleanupRules edge cases', () => {
 
   it.skip('should handle extremely large number of tabs', { timeout: 10000 }, async () => {
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 10,
@@ -1451,7 +1451,7 @@ describe('applyCleanupRules edge cases', () => {
     // which means the idle check passes but the falsy check fails, so it won't be closed
     // This is expected behavior - we just verify it doesn't crash
     // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({
+    chrome.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
