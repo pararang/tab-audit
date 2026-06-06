@@ -24,6 +24,16 @@ import { applyCleanupRules } from './index';
 // @ts-expect-error - chrome is mocked
 const messageListener = chrome.runtime.onMessage.addListener.mock.calls[0][0];
 
+// Capture other event listeners registered during module import
+// @ts-expect-error - chrome is mocked
+const createdListener = chrome.tabs.onCreated.addListener.mock.calls[0][0];
+// @ts-expect-error - chrome is mocked
+const removedListener = chrome.tabs.onRemoved.addListener.mock.calls[0][0];
+// @ts-expect-error - chrome is mocked
+const storageChangedListener = chrome.storage.onChanged.addListener.mock.calls[0][0];
+// @ts-expect-error - chrome is mocked
+const commandListener = chrome.commands.onCommand.addListener.mock.calls[0][0];
+
 describe('updateTabActivity', () => {
   beforeEach(() => {
     resetTabActivityMap();
@@ -1660,8 +1670,108 @@ describe('chrome.runtime.onMessage runCleanup', () => {
   it('should return undefined for unknown actions', () => {
     const sendResponse = vi.fn();
     const result = messageListener({ action: 'unknown' }, {}, sendResponse);
-
     expect(result).toBeUndefined();
     expect(sendResponse).not.toHaveBeenCalled();
+  });
+});
+
+describe('chrome.tabs.onCreated listener', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetTabActivityMap();
+  });
+
+  it('should update activity and run cleanup when tab has id', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 30,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+
+    createdListener({ id: 1 });
+
+    await vi.waitFor(() => {
+      // @ts-expect-error - chrome is mocked
+      expect(chrome.tabs.query).toHaveBeenCalled();
+    });
+  });
+
+  it('should handle tab without id', () => {
+    createdListener({});
+    // Should not throw
+  });
+});
+
+describe('chrome.tabs.onRemoved listener', () => {
+  beforeEach(() => {
+    resetTabActivityMap();
+  });
+
+  it('should remove tab activity record', () => {
+    updateTabActivity(42);
+    expect(getLastActivity({ id: 42, lastAccessed: 0 })).toBeGreaterThan(0);
+
+    removedListener(42);
+    // After removal, should fallback to lastAccessed
+    expect(getLastActivity({ id: 42, lastAccessed: 0 })).toBe(0);
+  });
+});
+
+describe('chrome.storage.onChanged listener', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetTabActivityMap();
+  });
+
+  it('should call handleStorageChanged with changes and namespace', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 30,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+
+    storageChangedListener({ maxTabs: { newValue: 10 } }, 'sync');
+
+    await vi.waitFor(() => {
+      // @ts-expect-error - chrome is mocked
+      expect(chrome.tabs.query).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('chrome.commands.onCommand listener', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetTabActivityMap();
+  });
+
+  it('should call handleCommand and catch errors', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 30,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([]);
+
+    commandListener('run-cleanup');
+
+    // Should not throw — errors are caught
+    await vi.waitFor(() => {
+      // @ts-expect-error - chrome is mocked
+      expect(chrome.tabs.query).toHaveBeenCalled();
+    });
   });
 });

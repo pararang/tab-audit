@@ -1,6 +1,7 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { MockChrome } from '../__test-utils__/chrome-mock';
 import './__mocks__/chrome';
+const chromeMock = chrome as unknown as MockChrome;
 import { applyTheme } from '../shared/theme';
 import { getDomain } from '../shared/domain';
 import {
@@ -76,15 +77,13 @@ vi.stubGlobal('document', {
 });
 
 // Mock chrome.runtime.openOptionsPage
-// @ts-expect-error - chrome is mocked
-chrome.runtime = {
-  ...chrome.runtime,
+chromeMock.runtime = {
+  ...chromeMock.runtime,
   openOptionsPage: vi.fn(),
 };
 
 // Mock chrome.runtime.sendMessage
-// @ts-expect-error - chrome is mocked
-chrome.runtime.sendMessage = vi.fn();
+chromeMock.runtime.sendMessage = vi.fn();
 
 describe('applyTheme', () => {
   beforeEach(() => {
@@ -102,13 +101,13 @@ describe('applyTheme', () => {
   });
 
   it('should resolve system preference to light', () => {
-    mockMatchMedia.mockReturnValue({ matches: false });
+    mockMatchMedia.mockReturnValue({ matches: false, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
     applyTheme('system');
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
   it('should resolve system preference to dark', () => {
-    mockMatchMedia.mockReturnValue({ matches: true });
+    mockMatchMedia.mockReturnValue({ matches: true, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
     applyTheme('system');
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -150,10 +149,8 @@ describe('getTabStats', () => {
   });
 
   it('should return zero cleaned and dash for top domain with no tabs', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ tabsCleanedToday: 0 });
+    chromeMock.tabs.query.mockResolvedValue([]);
+    chromeMock.storage.local.get.mockResolvedValue({ tabsCleanedToday: 0 });
 
     const stats = await getTabStats();
 
@@ -162,14 +159,12 @@ describe('getTabStats', () => {
   });
 
   it('should count tabs per domain correctly', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { url: 'https://example.com/page1' },
       { url: 'https://example.com/page2' },
       { url: 'https://test.com/page' },
     ]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ tabsCleanedToday: 5 });
+    chromeMock.storage.local.get.mockResolvedValue({ tabsCleanedToday: 5 });
 
     const stats = await getTabStats();
 
@@ -178,14 +173,12 @@ describe('getTabStats', () => {
   });
 
   it('should skip tabs without URLs', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { url: undefined },
       { url: 'https://example.com' },
       { url: null },
     ]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({});
+    chromeMock.storage.local.get.mockResolvedValue({});
 
     const stats = await getTabStats();
 
@@ -193,10 +186,8 @@ describe('getTabStats', () => {
   });
 
   it('should return cleanedToday from storage', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ tabsCleanedToday: 42 });
+    chromeMock.tabs.query.mockResolvedValue([]);
+    chromeMock.storage.local.get.mockResolvedValue({ tabsCleanedToday: 42 });
 
     const stats = await getTabStats();
 
@@ -204,10 +195,8 @@ describe('getTabStats', () => {
   });
 
   it('should return 0 for cleanedToday when not in storage', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({});
+    chromeMock.tabs.query.mockResolvedValue([]);
+    chromeMock.storage.local.get.mockResolvedValue({});
 
     const stats = await getTabStats();
 
@@ -215,8 +204,7 @@ describe('getTabStats', () => {
   });
 
   it('should handle Chrome API errors gracefully', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockRejectedValue(new Error('API error'));
+    chromeMock.tabs.query.mockRejectedValue(new Error('API error'));
 
     const stats = await getTabStats();
 
@@ -225,16 +213,14 @@ describe('getTabStats', () => {
   });
 
   it('should identify most frequent domain', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { url: 'https://a.com/page1' },
       { url: 'https://a.com/page2' },
       { url: 'https://b.com/page' },
       { url: 'https://b.com/page2' },
       { url: 'https://c.com/page' },
     ]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({});
+    chromeMock.storage.local.get.mockResolvedValue({});
 
     const stats = await getTabStats();
 
@@ -320,11 +306,12 @@ describe('updateTabCount', () => {
       topDomain: {} as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockImplementation((query, callback) => {
-      callback([{ id: 1 }, { id: 2 }, { id: 3 }]);
+    chromeMock.tabs.query.mockImplementation((_query: any, callback: any) => {
+      callback([{ id: 1 } as chrome.tabs.Tab, { id: 2 } as chrome.tabs.Tab, { id: 3 } as chrome.tabs.Tab]);
     });
 
     updateTabCount(mockElements);
@@ -339,10 +326,11 @@ describe('updateTabCount', () => {
       topDomain: {} as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockImplementation((query, callback) => {
+    chromeMock.tabs.query.mockImplementation((_query: any, callback: any) => {
       callback([]);
     });
 
@@ -364,15 +352,15 @@ describe('updateStats', () => {
       topDomain: { textContent: '' } as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { url: 'https://example.com/page1' },
       { url: 'https://example.com/page2' },
     ]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ tabsCleanedToday: 10 });
+    chromeMock.storage.local.get.mockResolvedValue({ tabsCleanedToday: 10 });
 
     await updateStats(mockElements);
 
@@ -387,12 +375,12 @@ describe('updateStats', () => {
       topDomain: { textContent: '' } as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.local.get.mockResolvedValue({ tabsCleanedToday: 0 });
+    chromeMock.tabs.query.mockResolvedValue([]);
+    chromeMock.storage.local.get.mockResolvedValue({ tabsCleanedToday: 0 });
 
     await updateStats(mockElements);
 
@@ -407,10 +395,11 @@ describe('updateStats', () => {
       topDomain: { textContent: 'initial' } as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockRejectedValue(new Error('API error'));
+    chromeMock.tabs.query.mockRejectedValue(new Error('API error'));
 
     await updateStats(mockElements);
 
@@ -427,6 +416,8 @@ describe('updateButton', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
     updateButton(mockElements, true);
@@ -442,6 +433,8 @@ describe('updateButton', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
     updateButton(mockElements, false);
@@ -463,21 +456,19 @@ describe('handleToggle', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
-    // @ts-expect-error - chrome is mocked
-    chrome.runtime.sendMessage.mockResolvedValue(undefined);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.runtime.sendMessage.mockResolvedValue(undefined);
 
     await handleToggle(mockElements);
 
     expect(mockElements.toggleButton.textContent).toBe('Disable Auto Clean');
     expect(mockElements.toggleButton.className).toBe('enabled');
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ action: 'runCleanup' });
+    expect(chromeMock.runtime.sendMessage).toHaveBeenCalledWith({ action: 'runCleanup' });
   });
 
   it('should toggle enabled state without sending message when turning off', async () => {
@@ -487,19 +478,18 @@ describe('handleToggle', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: true });
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await handleToggle(mockElements);
 
     expect(mockElements.toggleButton.textContent).toBe('Enable Auto Clean');
     expect(mockElements.toggleButton.className).toBe('disabled');
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled();
   });
 });
 
@@ -515,8 +505,7 @@ describe('initPopup', () => {
 
     await initPopup();
 
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.get).not.toHaveBeenCalled();
+    expect(chromeMock.storage.sync.get).not.toHaveBeenCalled();
   });
 
   it('should initialize when all popup elements exist', async () => {
@@ -535,21 +524,18 @@ describe('initPopup', () => {
         'cleaned-count': mockCleanedCount,
         'top-domain': mockTopDomain,
         'toggle-clean': mockToggleButton,
-        'open-settings': null,
+        'open-settings': null as unknown as Element,
       };
       return elements[id] || null;
     });
 
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: true, theme: 'dark' });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: true, theme: 'dark' });
+    chromeMock.tabs.query.mockResolvedValue([]);
 
     await initPopup();
 
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.get).toHaveBeenCalled();
+    expect(chromeMock.storage.sync.get).toHaveBeenCalled();
   });
 });
 
@@ -570,8 +556,7 @@ describe('generateQRCode', () => {
     };
 
     await generateQRCode(elements);
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.query).not.toHaveBeenCalled();
   });
 
   it('should return early when qrUrl is missing', async () => {
@@ -586,8 +571,7 @@ describe('generateQRCode', () => {
     };
 
     await generateQRCode(elements);
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.query).not.toHaveBeenCalled();
   });
 
   it('should show message for chrome:// URLs', async () => {
@@ -602,8 +586,7 @@ describe('generateQRCode', () => {
       qrUrl,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ url: 'chrome://settings' }]);
+    chromeMock.tabs.query.mockResolvedValue([{ url: 'chrome://settings' }]);
 
     await generateQRCode(elements);
     expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
@@ -621,8 +604,7 @@ describe('generateQRCode', () => {
       qrUrl,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ url: 'chrome-extension://abcdefghijk/lmnop.html' }]);
+    chromeMock.tabs.query.mockResolvedValue([{ url: 'chrome-extension://abcdefghijk/lmnop.html' }]);
 
     await generateQRCode(elements);
     expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
@@ -641,8 +623,7 @@ describe('generateQRCode', () => {
       qrUrl,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ url: 'https://example.com/page' }]);
+    chromeMock.tabs.query.mockResolvedValue([{ url: 'https://example.com/page' }]);
 
     await generateQRCode(elements);
     expect(qrUrl.textContent).toBe('https://example.com/page');
@@ -661,8 +642,7 @@ describe('generateQRCode', () => {
     };
 
     const longUrl = 'https://example.com/very/long/path/with/many/segments/and/query/parameters?foo=bar&baz=qux';
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ url: longUrl }]);
+    chromeMock.tabs.query.mockResolvedValue([{ url: longUrl }]);
 
     await generateQRCode(elements);
     expect(qrUrl.textContent).toBe('https://example.com/very/long/path/with/...');
@@ -680,8 +660,7 @@ describe('generateQRCode', () => {
       qrUrl,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.tabs.query.mockResolvedValue([]);
 
     await generateQRCode(elements);
     expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
@@ -699,8 +678,7 @@ describe('generateQRCode', () => {
       qrUrl,
     };
 
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ url: undefined }]);
+    chromeMock.tabs.query.mockResolvedValue([{ url: undefined }]);
 
     await generateQRCode(elements);
     expect(qrUrl.textContent).toBe('Cannot generate QR for this page');
