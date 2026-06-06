@@ -17,8 +17,7 @@ const mockChrome = {
   },
 };
 
-// @ts-expect-error - Chrome global is complex, we only mock what's needed
-global.chrome = mockChrome;
+vi.stubGlobal('chrome', mockChrome);
 
 // Mock window.matchMedia
 const mockMatchMedia = vi.fn((query) => ({

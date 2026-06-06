@@ -1,8 +1,8 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock Chrome APIs and DOM before importing the module
 import './__mocks__/chrome';
+const chromeMock = vi.mocked(chrome);
 import { applyTheme } from '../shared/theme';
 import {
   isValidSettings,
@@ -91,15 +91,13 @@ describe('applyTheme', () => {
   });
 
   it('should resolve system preference to light', () => {
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({ matches: false });
+    mockMatchMedia.mockReturnValue({ matches: false });
     applyTheme('system');
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
   it('should resolve system preference to dark', () => {
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({ matches: true });
+    mockMatchMedia.mockReturnValue({ matches: true });
     applyTheme('system');
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -296,9 +294,7 @@ describe('loadSettingsToForm', () => {
       restoreBtn: {} as HTMLButtonElement,
       restoreFile: {} as HTMLInputElement,
     };
-
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       idleTimeout: 45,
       maxTabs: 100,
@@ -335,9 +331,7 @@ describe('loadSettingsToForm', () => {
       restoreBtn: {} as HTMLButtonElement,
       restoreFile: {} as HTMLInputElement,
     };
-
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       ...DEFAULT_SETTINGS,
       theme: 'system',
     });
@@ -378,8 +372,7 @@ describe('saveSettingsFromForm', () => {
     expect(result.blacklist).toEqual(['c.com']);
     expect(result.whitelistedTabGroups).toEqual(['Work', 'Research']);
     expect(result.notificationsEnabled).toBe(true);
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalled();
+    expect(chromeMock.storage.sync.set).toHaveBeenCalled();
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
@@ -519,9 +512,7 @@ describe('saveSettingsFromForm', () => {
       restoreBtn: {} as HTMLButtonElement,
       restoreFile: {} as HTMLInputElement,
     };
-
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: true });
 
     const result = await saveSettingsFromForm(mockElements);
 
@@ -542,9 +533,7 @@ describe('saveSettingsFromForm', () => {
       restoreBtn: {} as HTMLButtonElement,
       restoreFile: {} as HTMLInputElement,
     };
-
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
 
     const result = await saveSettingsFromForm(mockElements);
 
@@ -596,9 +585,7 @@ describe('bindEventListeners', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
@@ -611,7 +598,6 @@ describe('bindEventListeners', () => {
     expect(mockForm.addEventListener).toHaveBeenCalledWith('submit', expect.any(Function));
     expect(mockButton.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
     expect(mockInput.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
-    // @ts-expect-error - window is mocked
     expect(window.matchMedia).toHaveBeenCalled();
   });
 
@@ -655,15 +641,11 @@ describe('bindEventListeners', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
-
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockRejectedValue(new Error('Storage error'));
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage error'));
 
     const elements = getFormElements();
     if (elements) {
@@ -723,9 +705,7 @@ describe('bindEventListeners', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
@@ -787,9 +767,7 @@ describe('bindEventListeners', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
@@ -856,9 +834,7 @@ describe('bindEventListeners', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
@@ -926,9 +902,7 @@ describe('bindEventListeners', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
@@ -996,14 +970,11 @@ describe('bindEventListeners', () => {
     });
 
     const mockAddEventListener = vi.fn();
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: mockAddEventListener,
     });
-
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS, theme: 'system' });
+    chromeMock.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS, theme: 'system' });
 
     const elements = getFormElements();
     if (elements) {
@@ -1025,9 +996,7 @@ describe('initOptions', () => {
     mockGetElementById.mockReturnValue(null);
 
     await initOptions();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.get).not.toHaveBeenCalled();
+    expect(chromeMock.storage.sync.get).not.toHaveBeenCalled();
   });
 
   it('should initialize when all form elements exist', async () => {
@@ -1067,18 +1036,13 @@ describe('initOptions', () => {
       };
       return elements[id] || null;
     });
-
-    // @ts-expect-error - window is mocked
-    window.matchMedia.mockReturnValue({
+    mockMatchMedia.mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue(DEFAULT_SETTINGS);
+    chromeMock.storage.sync.get.mockResolvedValue(DEFAULT_SETTINGS);
 
     await initOptions();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.get).toHaveBeenCalled();
+    expect(chromeMock.storage.sync.get).toHaveBeenCalled();
   });
 });

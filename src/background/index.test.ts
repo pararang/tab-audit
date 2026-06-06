@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import './__mocks__/chrome';
+const chromeMock = vi.mocked(chrome);
 import {
   updateTabActivity,
   getLastActivity,
@@ -21,8 +20,7 @@ import { getDomain, domainMatches } from '../shared/domain';
 import { applyCleanupRules } from './index';
 
 // Capture the onMessage listener registered during module import
-// @ts-expect-error - chrome is mocked
-const messageListener = chrome.runtime.onMessage.addListener.mock.calls[0][0];
+const messageListener = chromeMock.runtime.onMessage.addListener.mock.calls[0][0];
 
 describe('updateTabActivity', () => {
   beforeEach(() => {
@@ -320,8 +318,7 @@ describe('applyCleanupRules', () => {
   });
 
   it('should not close any tabs when extension is disabled', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: false,
       idleTimeout: 30,
       maxTabs: 50,
@@ -329,21 +326,17 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://example.com', lastAccessed: 100 }),
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.remove).not.toHaveBeenCalled();
   });
 
   it('should not close tabs in whitelisted tab groups', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -352,24 +345,19 @@ describe('applyCleanupRules', () => {
       whitelistedTabGroups: ['Work'],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabGroups.query.mockResolvedValue([
+    chromeMock.tabGroups.query.mockResolvedValue([
       { id: 10, title: 'Work', color: 'blue', collapsed: false, windowId: 1 },
       { id: 20, title: 'Personal', color: 'green', collapsed: false, windowId: 1 },
     ]);
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://work.com', groupId: 10, lastAccessed: now - 120000, active: false },
       { id: 2, url: 'https://personal.com', groupId: 20, lastAccessed: now - 120000, active: false },
       { id: 3, url: 'https://other.com', groupId: -1, lastAccessed: now - 120000, active: false },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalled();
-    // @ts-expect-error - chrome is mocked
-    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    expect(chromeMock.tabs.remove).toHaveBeenCalled();
+    const removedTabs = chromeMock.tabs.remove.mock.calls[0][0];
     // Tab 1 is in whitelisted 'Work' group - should NOT be closed
     expect(removedTabs).not.toContain(1);
     // Tab 3 has no group - should be closed (idle)
@@ -378,8 +366,7 @@ describe('applyCleanupRules', () => {
 
   it('should not close tabs in whitelisted tab groups when over maxTabs', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 2,
@@ -388,26 +375,21 @@ describe('applyCleanupRules', () => {
       whitelistedTabGroups: ['Work'],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabGroups.query.mockResolvedValue([
+    chromeMock.tabGroups.query.mockResolvedValue([
       { id: 10, title: 'Work', color: 'blue', collapsed: false, windowId: 1 },
     ]);
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://work.com', groupId: 10, lastAccessed: now - 5000, active: true },
       { id: 2, url: 'https://work.com/page2', groupId: 10, lastAccessed: now - 10000, active: false },
       { id: 3, url: 'https://other.com', lastAccessed: now - 15000, active: false },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([3]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([3]);
   });
 
   it('should close tabs over maxTabs limit', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 2,
@@ -415,26 +397,21 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://a.com', active: true, lastAccessed: 100 }),
       createTab({ id: 2, url: 'https://b.com', lastAccessed: 200 }),
       createTab({ id: 3, url: 'https://c.com', lastAccessed: 150 }),
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalled();
-    // @ts-expect-error - chrome is mocked
-    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    expect(chromeMock.tabs.remove).toHaveBeenCalled();
+    const removedTabs = chromeMock.tabs.remove.mock.calls[0][0];
     expect(removedTabs).toContain(3); // Oldest non-active tab should be closed
   });
 
   it('should not close whitelisted domains', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 50,
@@ -442,21 +419,17 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://important.com', lastAccessed: now - 120000 }), // 2 min old
       createTab({ id: 2, url: 'https://other.com', lastAccessed: now - 120000 }), // 2 min old
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([2]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([2]);
   });
 
   it('should always close blacklisted domains', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 50,
@@ -464,22 +437,18 @@ describe('applyCleanupRules', () => {
       blacklist: ['bad.com'],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://bad.com', active: false, lastAccessed: Date.now() }),
       createTab({ id: 2, url: 'https://good.com', active: true, lastAccessed: Date.now() }),
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([1]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([1]);
   });
 
   it('should close idle tabs beyond timeout', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 50,
@@ -488,25 +457,21 @@ describe('applyCleanupRules', () => {
       notificationsEnabled: false,
     });
     // @ts-except - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://old.com', lastAccessed: now - 120000, active: true }),
       createTab({ id: 2, url: 'https://idle.com', lastAccessed: now - 120000, active: false }),
       createTab({ id: 3, url: 'https://recent.com', lastAccessed: now - 30000, active: false }),
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalled();
-    // @ts-expect-error - chrome is mocked
-    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    expect(chromeMock.tabs.remove).toHaveBeenCalled();
+    const removedTabs = chromeMock.tabs.remove.mock.calls[0][0];
     expect(removedTabs).toContain(2);
   });
 
   it('should not close active tab even if idle', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -514,20 +479,16 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://example.com', lastAccessed: now - 120000, active: true }),
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.remove).not.toHaveBeenCalled();
   });
 
   it('should handle empty tabs array', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -535,18 +496,14 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.tabs.query.mockResolvedValue([]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.remove).not.toHaveBeenCalled();
   });
 
   it('should send notification when tabs are closed and notifications enabled', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 1,
@@ -554,22 +511,18 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: true,
     });
-    // @ts-expect error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://a.com', active: true, lastAccessed: 100 }),
       createTab({ id: 2, url: 'https://b.com', lastAccessed: 200 }),
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect error - chrome is mocked
-    expect(chrome.notifications.create).toHaveBeenCalled();
+    expect(chromeMock.notifications.create).toHaveBeenCalled();
   });
 
   it('should combine multiple cleanup rules correctly', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 2,
@@ -577,8 +530,7 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://important.com', lastAccessed: now - 120000, active: true }), // whitelisted
       createTab({ id: 2, url: 'https://idle.com', lastAccessed: now - 120000, active: false }), // idle, not whitelisted
       createTab({ id: 3, url: 'https://other.com', lastAccessed: now - 120000, active: false }), // idle, over maxTabs
@@ -586,11 +538,8 @@ describe('applyCleanupRules', () => {
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalled();
-    // @ts-expect-error - chrome is mocked
-    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    expect(chromeMock.tabs.remove).toHaveBeenCalled();
+    const removedTabs = chromeMock.tabs.remove.mock.calls[0][0];
     // Tab 2 is idle, tab 3 is also over limit but newer
     expect(removedTabs).toContain(2);
     expect(removedTabs).not.toContain(1); // whitelisted
@@ -599,8 +548,7 @@ describe('applyCleanupRules', () => {
 
   it('should match subdomains in whitelist', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -608,8 +556,7 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({
         id: 1,
         url: 'https://sub.example.com',
@@ -620,15 +567,12 @@ describe('applyCleanupRules', () => {
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([2]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([2]);
   });
 
   it('should close tab with no URL', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -636,8 +580,7 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: undefined, lastAccessed: now - 120000, active: false }),
     ]);
 
@@ -651,8 +594,7 @@ describe('applyCleanupRules', () => {
   it('should handle Chrome API errors gracefully', async () => {
     // Suppress expected error output
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -660,8 +602,7 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockRejectedValue(new Error('API error'));
+    chromeMock.tabs.query.mockRejectedValue(new Error('API error'));
 
     // Should not throw
     await expect(applyCleanupRules()).resolves.not.toThrow();
@@ -669,8 +610,7 @@ describe('applyCleanupRules', () => {
   });
 
   it('should handle notification creation error gracefully', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 1,
@@ -678,13 +618,11 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: true,
     });
-    // @ts-expect error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://a.com', active: true, lastAccessed: 100 }),
       createTab({ id: 2, url: 'https://b.com', lastAccessed: 200 }),
     ]);
-    // @ts-expect error - chrome is mocked
-    chrome.notifications.create.mockRejectedValue(new Error('Notification error'));
+    chromeMock.notifications.create.mockRejectedValue(new Error('Notification error'));
 
     // Should not throw even if notification fails
     await expect(applyCleanupRules()).resolves.not.toThrow();
@@ -692,8 +630,7 @@ describe('applyCleanupRules', () => {
 
   it('should handle tabs at various idle times correctly', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1, // 1 minute
       maxTabs: 50,
@@ -701,19 +638,15 @@ describe('applyCleanupRules', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://a.com', lastAccessed: now - 30000, active: true }), // 30s - not idle
       createTab({ id: 2, url: 'https://b.com', lastAccessed: now - 120000, active: false }), // 2min - idle
       createTab({ id: 3, url: 'https://c.com', lastAccessed: now - 180000, active: false }), // 3min - idle
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalled();
-    // @ts-expect-error - chrome is mocked
-    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    expect(chromeMock.tabs.remove).toHaveBeenCalled();
+    const removedTabs = chromeMock.tabs.remove.mock.calls[0][0];
     // Both idle tabs should be closed
     expect(removedTabs).toContain(2);
     expect(removedTabs).toContain(3);
@@ -726,10 +659,9 @@ describe('setWarningIcon', () => {
   });
 
   it('should set yellow warning icon when enabled', async () => {
-    const getURLSpy = vi.spyOn(chrome.runtime, 'getURL');
+    const getURLSpy = vi.spyOn(chromeMock.runtime, 'getURL');
     getURLSpy.mockImplementation((path) => `chrome-extension://mock/${path}`);
-    // @ts-expect-error - chrome is mocked
-    chrome.action.setIcon.mockImplementation((_, callback) => {
+    chromeMock.action.setIcon.mockImplementation((_, callback) => {
       if (callback) callback();
       return Promise.resolve();
     });
@@ -739,8 +671,7 @@ describe('setWarningIcon', () => {
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon16-yellow.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon48-yellow.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon128-yellow.png');
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).toHaveBeenCalledWith(
+    expect(chromeMock.action.setIcon).toHaveBeenCalledWith(
       {
         path: {
           16: 'chrome-extension://mock/icons/icon16-yellow.png',
@@ -753,10 +684,9 @@ describe('setWarningIcon', () => {
   });
 
   it('should set normal icon when disabled', async () => {
-    const getURLSpy = vi.spyOn(chrome.runtime, 'getURL');
+    const getURLSpy = vi.spyOn(chromeMock.runtime, 'getURL');
     getURLSpy.mockImplementation((path) => `chrome-extension://mock/${path}`);
-    // @ts-expect-error - chrome is mocked
-    chrome.action.setIcon.mockImplementation((_, callback) => {
+    chromeMock.action.setIcon.mockImplementation((_, callback) => {
       if (callback) callback();
       return Promise.resolve();
     });
@@ -766,8 +696,7 @@ describe('setWarningIcon', () => {
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon16.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon48.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon128.png');
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).toHaveBeenCalledWith(
+    expect(chromeMock.action.setIcon).toHaveBeenCalledWith(
       {
         path: {
           16: 'chrome-extension://mock/icons/icon16.png',
@@ -783,14 +712,12 @@ describe('setWarningIcon', () => {
     // Suppress expected warning output
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const getURLSpy = vi.spyOn(chrome.runtime, 'getURL');
+    const getURLSpy = vi.spyOn(chromeMock.runtime, 'getURL');
     getURLSpy.mockImplementation((path) => `chrome-extension://mock/${path}`);
-    // @ts-expect-error - chrome is mocked
-    chrome.action.setIcon.mockImplementation((_, callback) => {
+    chromeMock.action.setIcon.mockImplementation((_, callback) => {
       if (callback) {
         callback();
-        // @ts-expect-error - lastError is set by Chrome
-        chrome.runtime.lastError = { message: 'Icon error' };
+        Object.defineProperty(chromeMock.runtime, 'lastError', { value: { message: 'Icon error' } });
       }
       return Promise.resolve();
     });
@@ -810,17 +737,14 @@ describe('initializeActivityTracking', () => {
 
   it('should initialize activity tracking for all existing tabs', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://a.com', lastAccessed: now - 10000 },
       { id: 2, url: 'https://b.com', lastAccessed: now - 20000 },
       { id: 3, url: 'https://c.com', lastAccessed: now - 30000 },
     ]);
 
     await initializeActivityTracking();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).toHaveBeenCalledWith({});
+    expect(chromeMock.tabs.query).toHaveBeenCalledWith({});
     // Use getLastActivity to verify the map was populated
     expect(getLastActivity({ id: 1 } as chrome.tabs.Tab)).toBe(now - 10000);
     expect(getLastActivity({ id: 2 } as chrome.tabs.Tab)).toBe(now - 20000);
@@ -829,8 +753,7 @@ describe('initializeActivityTracking', () => {
 
   it('should use current time for tabs without lastAccessed', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ id: 1, url: 'https://a.com', lastAccessed: undefined }]);
+    chromeMock.tabs.query.mockResolvedValue([{ id: 1, url: 'https://a.com', lastAccessed: undefined }]);
 
     await initializeActivityTracking();
 
@@ -841,8 +764,7 @@ describe('initializeActivityTracking', () => {
   });
 
   it('should skip tabs without id', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: undefined, url: 'https://a.com', lastAccessed: Date.now() },
     ]);
 
@@ -855,9 +777,7 @@ describe('initializeActivityTracking', () => {
   it('should handle Chrome API errors gracefully', async () => {
     // Suppress expected error output
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockRejectedValue(new Error('Query error'));
+    chromeMock.tabs.query.mockRejectedValue(new Error('Query error'));
 
     await initializeActivityTracking();
 
@@ -872,32 +792,27 @@ describe('handleStorageChanged', () => {
     vi.clearAllMocks();
     resetTabActivityMap();
     // Mock tabs.query to prevent console errors from applyCleanupRules
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.tabs.query.mockResolvedValue([]);
   });
 
   it('should reset warning when maxTabs changes', async () => {
-    const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
+    const setIconSpy = vi.spyOn(chromeMock.action, 'setIcon');
     setIconSpy.mockResolvedValue(undefined);
 
     handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'sync');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).toHaveBeenCalled();
+    expect(chromeMock.action.setIcon).toHaveBeenCalled();
   });
 
   it('should reset warning when enabled changes', async () => {
-    const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
+    const setIconSpy = vi.spyOn(chromeMock.action, 'setIcon');
     setIconSpy.mockResolvedValue(undefined);
 
     handleStorageChanged({ enabled: { newValue: true, oldValue: false } }, 'sync');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).toHaveBeenCalled();
+    expect(chromeMock.action.setIcon).toHaveBeenCalled();
   });
 
   it('should not reset warning for other changes', () => {
-    const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
+    const setIconSpy = vi.spyOn(chromeMock.action, 'setIcon');
 
     handleStorageChanged({ whitelist: { newValue: ['a.com'], oldValue: [] } }, 'sync');
 
@@ -905,7 +820,7 @@ describe('handleStorageChanged', () => {
   });
 
   it('should not respond to non-sync storage changes', () => {
-    const setIconSpy = vi.spyOn(chrome.action, 'setIcon');
+    const setIconSpy = vi.spyOn(chromeMock.action, 'setIcon');
 
     handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'local');
 
@@ -917,8 +832,7 @@ describe('handleStorageChanged', () => {
 
     // Wait for async applyCleanupRules to complete
     await vi.waitFor(() => {
-      // @ts-expect-error - chrome is mocked
-      expect(chrome.tabs.query).toHaveBeenCalled();
+      expect(chromeMock.tabs.query).toHaveBeenCalled();
     });
   });
 
@@ -927,9 +841,7 @@ describe('handleStorageChanged', () => {
 
     // Small delay to let any async calls settle
     await new Promise((resolve) => setTimeout(resolve, 10));
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.query).not.toHaveBeenCalled();
   });
 });
 
@@ -940,8 +852,7 @@ describe('handleCommand', () => {
   });
 
   it('should run cleanup on run-cleanup command', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -949,37 +860,26 @@ describe('handleCommand', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.tabs.query.mockResolvedValue([]);
 
     await handleCommand('run-cleanup');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).toHaveBeenCalled();
+    expect(chromeMock.tabs.query).toHaveBeenCalled();
   });
 
   it('should toggle enabled on toggle-clean command', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: true });
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({ enabled: true });
   });
 
   it('should toggle enabled from true to false', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: true });
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: false });
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({ enabled: false });
   });
 
   it('should handle unknown commands gracefully', async () => {
@@ -1198,9 +1098,7 @@ describe('storage change warning reset', () => {
     };
 
     handleStorageChanged(changes, 'sync');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).toHaveBeenCalled();
+    expect(chromeMock.action.setIcon).toHaveBeenCalled();
   });
 
   it('should reset warning when enabled changes', async () => {
@@ -1209,9 +1107,7 @@ describe('storage change warning reset', () => {
     };
 
     handleStorageChanged(changes, 'sync');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).toHaveBeenCalled();
+    expect(chromeMock.action.setIcon).toHaveBeenCalled();
   });
 
   it('should not reset warning for other changes', () => {
@@ -1220,9 +1116,7 @@ describe('storage change warning reset', () => {
     };
 
     handleStorageChanged(changes, 'sync');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).not.toHaveBeenCalled();
+    expect(chromeMock.action.setIcon).not.toHaveBeenCalled();
   });
 
   it('should not respond to non-sync storage changes', () => {
@@ -1231,9 +1125,7 @@ describe('storage change warning reset', () => {
     };
 
     handleStorageChanged(changes, 'local');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.action.setIcon).not.toHaveBeenCalled();
+    expect(chromeMock.action.setIcon).not.toHaveBeenCalled();
   });
 });
 
@@ -1243,37 +1135,26 @@ describe('command handling', () => {
   });
 
   it('should run cleanup on run-cleanup command', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: true });
 
     await handleCommand('run-cleanup');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).toHaveBeenCalled();
+    expect(chromeMock.tabs.query).toHaveBeenCalled();
   });
 
   it('should handle toggle-clean command from enabled to disabled', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: true });
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: false });
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({ enabled: false });
   });
 
   it('should handle toggle-clean command from disabled to enabled', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await handleCommand('toggle-clean');
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ enabled: true });
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({ enabled: true });
   });
 
   it('should handle unknown commands gracefully', async () => {
@@ -1287,8 +1168,7 @@ describe('applyCleanupRules edge cases', () => {
   beforeEach(() => {
     resetTabActivityMap();
     vi.clearAllMocks();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1296,14 +1176,12 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.tabs.query.mockResolvedValue([]);
   });
 
   it('should handle maxTabs of 0 (unlimited)', async () => {
     // Test that the function doesn't crash with maxTabs=0
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 0,
@@ -1311,8 +1189,7 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com', active: true, lastAccessed: 0 }, // active tab won't be closed
     ]);
 
@@ -1321,8 +1198,7 @@ describe('applyCleanupRules edge cases', () => {
   });
 
   it('should handle idleTimeout of 0 (immediately idle)', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 0,
       maxTabs: 50,
@@ -1330,21 +1206,17 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com', active: false, lastAccessed: Date.now() - 1000 },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([1]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([1]);
   });
 
   it('should handle whitelist with special characters', async () => {
     // Test that the function doesn't crash with special characters in whitelist
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1352,8 +1224,7 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example-site.com/page', active: true, lastAccessed: 0 },
       { id: 2, url: 'https://test-domain.org/', active: false, lastAccessed: 0 },
       { id: 3, url: 'https://other.com/', active: false, lastAccessed: 0 },
@@ -1364,8 +1235,7 @@ describe('applyCleanupRules edge cases', () => {
   });
 
   it('should handle blacklist with special characters', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1373,22 +1243,18 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: ['facebook.com', 'twitter.com'],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://www.facebook.com/', active: false, lastAccessed: 0 },
       { id: 2, url: 'https://twitter.com/user', active: false, lastAccessed: 0 },
       { id: 3, url: 'https://linkedin.com/', active: false, lastAccessed: 0 },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([1, 2]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([1, 2]);
   });
 
   it('should not close tabs when all tabs are whitelisted', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 5,
@@ -1396,21 +1262,17 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com/', active: false, lastAccessed: 0 },
       { id: 2, url: 'https://test.com/', active: false, lastAccessed: 0 },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.remove).not.toHaveBeenCalled();
   });
 
   it('should handle mixed whitelist and blacklist correctly', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -1418,20 +1280,16 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: ['facebook.com'],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://facebook.com/', active: false, lastAccessed: 0 },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.remove).not.toHaveBeenCalled();
   });
 
   it.skip('should handle extremely large number of tabs', { timeout: 10000 }, async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 10,
@@ -1446,9 +1304,7 @@ describe('applyCleanupRules edge cases', () => {
       active: i === 0,
       lastAccessed: i * 1000,
     }));
-
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue(tabs);
+    chromeMock.tabs.query.mockResolvedValue(tabs);
 
     const startTime = Date.now();
     await applyCleanupRules();
@@ -1458,17 +1314,14 @@ describe('applyCleanupRules edge cases', () => {
   });
 
   it.skip('should handle notification creation error gracefully', { timeout: 10000 }, async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.notifications.create.mockImplementation((options, callback) => {
+    chromeMock.notifications.create.mockImplementation((options, callback) => {
       if (callback) {
         callback();
-        // @ts-expect-error - lastError is set by Chrome
-        chrome.runtime.lastError = { message: 'Notification failed' };
+        Object.defineProperty(chromeMock.runtime, 'lastError', { value: { message: 'Notification failed' } });
       }
       return Promise.resolve('mock-id');
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com', active: false, lastAccessed: 0 },
     ]);
 
@@ -1478,8 +1331,7 @@ describe('applyCleanupRules edge cases', () => {
   it('should handle tabs with very long URLs', async () => {
     // Test that the function doesn't crash with very long URLs
     const longUrl = 'https://example.com/' + 'a'.repeat(5000);
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: longUrl, active: false, lastAccessed: Date.now() },
     ]);
 
@@ -1488,8 +1340,7 @@ describe('applyCleanupRules edge cases', () => {
   });
 
   it('should handle concurrent cleanup calls', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com', active: false, lastAccessed: 0 },
     ]);
 
@@ -1501,8 +1352,7 @@ describe('applyCleanupRules edge cases', () => {
     // Tab without lastAccessed property - the code uses fallback of 0 (falsy),
     // which means the idle check passes but the falsy check fails, so it won't be closed
     // This is expected behavior - we just verify it doesn't crash
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -1510,8 +1360,7 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([{ id: 1, url: 'https://example.com', active: false }]);
+    chromeMock.tabs.query.mockResolvedValue([{ id: 1, url: 'https://example.com', active: false }]);
 
     // Should not throw
     await expect(applyCleanupRules()).resolves.not.toThrow();
@@ -1519,8 +1368,7 @@ describe('applyCleanupRules edge cases', () => {
 
   it('should not close pinned tabs when idle', async () => {
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 1,
       maxTabs: 50,
@@ -1528,21 +1376,17 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com', active: false, pinned: true, lastAccessed: now - 120000 },
       { id: 2, url: 'https://other.com', active: false, pinned: false, lastAccessed: now - 120000 },
     ]);
 
     await applyCleanupRules();
-
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([2]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([2]);
   });
 
   it('should not close pinned tabs when over maxTabs', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 2,
@@ -1550,8 +1394,7 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://a.com', active: true, pinned: false, lastAccessed: 100 },
       { id: 2, url: 'https://b.com', active: false, pinned: true, lastAccessed: 200 },
       { id: 3, url: 'https://c.com', active: false, pinned: false, lastAccessed: 150 },
@@ -1560,13 +1403,11 @@ describe('applyCleanupRules edge cases', () => {
     await applyCleanupRules();
 
     // Pinned tab (id: 2) should not be closed even though it's over maxTabs
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).toHaveBeenCalledWith([3]);
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith([3]);
   });
 
   it('should not close pinned tabs that are duplicates', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 50,
@@ -1574,8 +1415,7 @@ describe('applyCleanupRules edge cases', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://example.com', active: true, pinned: false, lastAccessed: 100 },
       { id: 2, url: 'https://example.com', active: false, pinned: true, lastAccessed: 200 },
       { id: 3, url: 'https://example.com', active: false, pinned: false, lastAccessed: 150 },
@@ -1584,15 +1424,13 @@ describe('applyCleanupRules edge cases', () => {
     await applyCleanupRules();
 
     // Pinned duplicate (id: 2) should not be closed
-    // @ts-expect-error - chrome is mocked
-    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    const removedTabs = chromeMock.tabs.remove.mock.calls[0][0];
     expect(removedTabs).not.toContain(2);
     expect(removedTabs).toContain(3);
   });
 
   it('should not close tabs when maxTabs is 0 (unlimited)', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 0,
@@ -1601,8 +1439,7 @@ describe('applyCleanupRules edge cases', () => {
       notificationsEnabled: false,
     });
     const now = Date.now();
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([
+    chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://a.com', active: true, lastAccessed: now },
       { id: 2, url: 'https://b.com', active: false, lastAccessed: now - 10000 },
       { id: 3, url: 'https://c.com', active: false, lastAccessed: now - 20000 },
@@ -1614,8 +1451,7 @@ describe('applyCleanupRules edge cases', () => {
 
     // No tabs should be closed due to maxTabs (0 = unlimited)
     // Idle timeout is 60min and all tabs are within that window
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.remove).not.toHaveBeenCalled();
+    expect(chromeMock.tabs.remove).not.toHaveBeenCalled();
   });
 });
 
@@ -1626,8 +1462,7 @@ describe('chrome.runtime.onMessage runCleanup', () => {
   });
 
   it('should await applyCleanupRules before calling sendResponse', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 30,
       maxTabs: 50,
@@ -1635,8 +1470,7 @@ describe('chrome.runtime.onMessage runCleanup', () => {
       blacklist: [],
       notificationsEnabled: false,
     });
-    // @ts-expect-error - chrome is mocked
-    chrome.tabs.query.mockResolvedValue([]);
+    chromeMock.tabs.query.mockResolvedValue([]);
 
     const sendResponse = vi.fn();
     const result = messageListener({ action: 'runCleanup' }, {}, sendResponse);
@@ -1653,8 +1487,7 @@ describe('chrome.runtime.onMessage runCleanup', () => {
     });
 
     // Verify cleanup actually ran
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.tabs.query).toHaveBeenCalled();
+    expect(chromeMock.tabs.query).toHaveBeenCalled();
   });
 
   it('should return undefined for unknown actions', () => {

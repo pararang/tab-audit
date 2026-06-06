@@ -30,8 +30,7 @@ const mockChrome = {
   },
 };
 
-// @ts-expect-error - Chrome global is complex, we only mock what's needed
-global.chrome = mockChrome;
+vi.stubGlobal('chrome', mockChrome);
 
 // Mock DOM elements
 const mockElements: Record<string, HTMLElement | null> = {};
@@ -48,5 +47,4 @@ const mockDocument = {
   },
 };
 
-// @ts-expect-error - Mocking document
-global.document = mockDocument;
+vi.stubGlobal('document', mockDocument);

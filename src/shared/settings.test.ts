@@ -1,20 +1,16 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, beforeEach } from 'vitest';
 import './__mocks__/chrome';
+const chromeMock = vi.mocked(chrome);
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from './settings';
 
 describe('getSettings', () => {
   beforeEach(() => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockReset();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockReset();
+    chromeMock.storage.sync.get.mockReset();
+    chromeMock.storage.sync.set.mockReset();
   });
 
   it('should return default settings when storage is empty', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({});
+    chromeMock.storage.sync.get.mockResolvedValue({});
 
     const settings = await getSettings();
 
@@ -22,8 +18,7 @@ describe('getSettings', () => {
   });
 
   it('should merge stored settings with defaults', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       maxTabs: 100,
     });
@@ -37,8 +32,7 @@ describe('getSettings', () => {
   });
 
   it('should override all default settings', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
       maxTabs: 200,
@@ -66,8 +60,7 @@ describe('getSettings', () => {
   it('should handle storage error gracefully', async () => {
     // Suppress console.error output during this test
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockRejectedValue(new Error('Storage error'));
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage error'));
 
     const settings = await getSettings();
 
@@ -77,8 +70,7 @@ describe('getSettings', () => {
 
   it('should handle storage error with different error types', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockRejectedValue(new Error('Quota exceeded'));
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Quota exceeded'));
 
     const settings = await getSettings();
 
@@ -87,8 +79,7 @@ describe('getSettings', () => {
   });
 
   it('should return defaults when storage returns null-like value', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue(null);
+    chromeMock.storage.sync.get.mockResolvedValue(null);
 
     const settings = await getSettings();
 
@@ -96,8 +87,7 @@ describe('getSettings', () => {
   });
 
   it('should merge partial storage data correctly', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockResolvedValue({
+    chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       maxTabs: 100,
     });
@@ -113,17 +103,14 @@ describe('getSettings', () => {
 
 describe('saveSettings error handling', () => {
   beforeEach(() => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockReset();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockReset();
+    chromeMock.storage.sync.get.mockReset();
+    chromeMock.storage.sync.set.mockReset();
   });
 
   it('should handle storage error gracefully', async () => {
     // Suppress console.error output during this test
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockRejectedValue(new Error('Storage error'));
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage error'));
 
     // Should not throw
     await saveSettings({ enabled: true });
@@ -135,8 +122,7 @@ describe('saveSettings error handling', () => {
 
   it('should handle different storage error types', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockRejectedValue(new Error('QuotaExceededError'));
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('QuotaExceededError'));
 
     await saveSettings({ maxTabs: 200 });
 
@@ -146,48 +132,39 @@ describe('saveSettings error handling', () => {
 
   it('should handle invalid settings object', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
-    // @ts-ignore - intentionally passing invalid partial settings
-    await saveSettings({ invalidKey: 'value' });
+    await saveSettings({ invalidKey: 'value' } as Parameters<typeof saveSettings>[0]);
 
     // Should attempt to save (Chrome storage ignores unknown keys)
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalled();
+    expect(chromeMock.storage.sync.set).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 });
 
 describe('saveSettings', () => {
   beforeEach(() => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.get.mockReset();
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockReset();
+    chromeMock.storage.sync.get.mockReset();
+    chromeMock.storage.sync.set.mockReset();
   });
 
   it('should save partial settings to storage', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await saveSettings({ enabled: true, maxTabs: 100 });
 
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({
       enabled: true,
       maxTabs: 100,
     });
   });
 
   it('should save single setting', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await saveSettings({ enabled: false });
 
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({
       enabled: false,
     });
   });
@@ -195,8 +172,7 @@ describe('saveSettings', () => {
   it('should handle storage error gracefully', async () => {
     // Suppress console.error output during this test
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockRejectedValue(new Error('Storage error'));
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage error'));
 
     // Should not throw
     await saveSettings({ enabled: true });
@@ -207,32 +183,28 @@ describe('saveSettings', () => {
   });
 
   it('should save array settings', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await saveSettings({
       whitelist: ['a.com', 'b.com'],
       blacklist: ['c.com'],
     });
 
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({
       whitelist: ['a.com', 'b.com'],
       blacklist: ['c.com'],
     });
   });
 
   it('should save boolean settings', async () => {
-    // @ts-expect-error - chrome is mocked
-    chrome.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
 
     await saveSettings({
       notificationsEnabled: true,
       enabled: false,
     });
 
-    // @ts-expect-error - chrome is mocked
-    expect(chrome.storage.sync.set).toHaveBeenCalledWith({
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({
       notificationsEnabled: true,
       enabled: false,
     });
