@@ -28,6 +28,6 @@ Form fields mapped to `Settings` interface from `src/shared/settings.ts`:
 
 ## Gotchas
 
-- Reads/writes `chrome.storage.sync` directly — NOT port/adapter pattern
+- Reads/writes `chrome.storage.sync` directly via shared `getSettings()`/`saveSettings()`
 - Domain lists stored as JSON arrays, UI renders as newline-separated text
 - Triggers `applyCleanupRules` indirectly via `storage.onChanged` listener in background
