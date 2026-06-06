@@ -1,5 +1,5 @@
 import { getSettings, saveSettings } from '../shared/settings';
-import { getDomain, domainMatches } from '../shared/domain';
+import { computeCleanup } from './cleanup';
 
 // Store last activity timestamps for each tab (tabId -> timestamp)
 const tabActivityMap: Map<number, number> = new Map();
@@ -81,52 +81,14 @@ export async function initializeActivityTracking(): Promise<void> {
   }
 }
 
-/**
- * Identifies duplicate tabs with the same URL.
- * Keeps the most recently accessed tab (or active tab) and marks others as duplicates.
- * @param tabs - Array of Chrome tabs to check
- * @returns Array of tab IDs to close (duplicates)
- * @example
- * const tabs = [{ id: 1, url: 'https://example.com' }, { id: 2, url: 'https://example.com' }];
- * const duplicates = getDuplicateTabs(tabs); // [1]
- */
-export function getDuplicateTabs(tabs: chrome.tabs.Tab[]): number[] {
-  const duplicates: number[] = [];
-  const urlMap: Map<string, chrome.tabs.Tab[]> = new Map();
-
-  tabs.forEach((tab) => {
-    if (!tab.url) return;
-    if (!urlMap.has(tab.url)) {
-      urlMap.set(tab.url, []);
-    }
-    urlMap.get(tab.url)!.push(tab);
-  });
-
-  urlMap.forEach((tabsWithSameUrl) => {
-    if (tabsWithSameUrl.length > 1) {
-      // Sort by last accessed, keep the most recent (lastAccessed is larger)
-      // But always prioritize active tabs (they should never be marked as duplicates)
-      tabsWithSameUrl.sort((a, b) => {
-        if (a.active && !b.active) return -1;
-        if (!a.active && b.active) return 1;
-        return (b.lastAccessed || 0) - (a.lastAccessed || 0);
-      });
-      // All except the first one are duplicates (active tab will be first if present)
-      tabsWithSameUrl.slice(1).forEach((tab) => {
-        if (tab.id && !tab.active && !tab.pinned) duplicates.push(tab.id);
-      });
-    }
-  });
-
-  return duplicates;
-}
+export { getDuplicateTabs } from './cleanup';
 
 /** Warning state for tab limit notification */
 let warningActive = false;
 
 /**
  * Applies cleanup rules to close tabs based on user settings.
- * Rules applied in order: whitelist, blacklist, idle timeout, duplicates, max tabs.
+ * Collects Chrome data, delegates to pure computeCleanup(), then applies results.
  * Called periodically by alarm and on various Chrome events.
  */
 export async function applyCleanupRules() {
@@ -134,16 +96,12 @@ export async function applyCleanupRules() {
     const settings = await getSettings();
     if (!settings.enabled) return;
 
-    const idleTimeoutMs = settings.idleTimeout * 60 * 1000;
-    const { maxTabs, whitelist, blacklist, whitelistedTabGroups, notificationsEnabled } = settings;
+    const { whitelistedTabGroups, notificationsEnabled, maxTabs } = settings;
 
-    const tabsToClose = new Set<number>();
-    const now = Date.now();
-
-    // Get all tabs
+    // Collect Chrome data
     const allTabs = await chrome.tabs.query({});
 
-    // Get whitelisted tab group IDs
+    // Resolve whitelisted tab group names to IDs
     const whitelistedGroupIds = new Set<number>();
     if (whitelistedTabGroups.length > 0) {
       try {
@@ -158,9 +116,17 @@ export async function applyCleanupRules() {
       }
     }
 
-    // Warning check: when tabs >= maxTabs - 2
-    const warningThreshold = maxTabs - 2;
-    if (warningThreshold > 0 && allTabs.length >= warningThreshold) {
+    // Pure computation — no Chrome calls
+    const result = computeCleanup({
+      settings,
+      tabs: allTabs,
+      whitelistedGroupIds,
+      now: Date.now(),
+      getLastActivity,
+    });
+
+    // Warning state management
+    if (result.shouldWarn) {
       if (!warningActive) {
         warningActive = true;
         await setWarningIcon(true);
@@ -170,7 +136,7 @@ export async function applyCleanupRules() {
               type: 'basic',
               iconUrl: chrome.runtime.getURL('icons/icon128.png'),
               title: 'Tab Warning',
-              message: `You have ${allTabs.length} tabs open (limit: ${maxTabs}). Consider closing some tabs.`,
+              message: `You have ${result.tabCount} tabs open (limit: ${maxTabs}). Consider closing some tabs.`,
             },
             () => {
               if (chrome.runtime.lastError) {
@@ -180,81 +146,15 @@ export async function applyCleanupRules() {
           );
         }
       }
-    } else if (allTabs.length < warningThreshold && warningActive) {
+    } else if (warningActive) {
       warningActive = false;
       await setWarningIcon(false);
     }
 
-    // Sort all tabs by last accessed (oldest first)
-    const sortedTabs = [...allTabs].sort((a, b) => (a.lastAccessed || 0) - (b.lastAccessed || 0));
-
-    allTabs.forEach((tab) => {
-      if (!tab.id || tab.active || tab.pinned) return; // Never close the active or pinned tabs
-
-      const domain = getDomain(tab.url);
-
-      // 1. Tab group whitelist check (skip tabs in whitelisted groups)
-      if (tab.groupId && whitelistedGroupIds.has(tab.groupId)) return;
-
-      // 2. Domain whitelist check (skip whitelisted domains)
-      if (whitelist.some((w) => domainMatches(domain, w))) return;
-
-      // 3. Blacklist check (always close if in blacklist and not active)
-      if (blacklist.some((b) => domainMatches(domain, b))) {
-        tabsToClose.add(tab.id);
-        return;
-      }
-
-      // 4. Idle timeout check (uses custom activity tracking)
-      const lastActivity = getLastActivity(tab);
-      if (lastActivity && now - lastActivity > idleTimeoutMs) {
-        tabsToClose.add(tab.id);
-      }
-    });
-
-    // 5. Duplicate tabs check
-    const duplicates = getDuplicateTabs(allTabs);
-    duplicates.forEach((id) => {
-      // Re-verify it's not whitelisted or active (though getDuplicateTabs check URL, active tab might be one of them)
-      const tab = allTabs.find((t) => t.id === id);
-      if (tab && !tab.active && !tab.pinned) {
-        const domain = getDomain(tab.url);
-        const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
-        if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
-          tabsToClose.add(id);
-        }
-      }
-    });
-
-    // 6. Max tabs check (close oldest inactive until below limit)
-    // maxTabs <= 0 means unlimited (per documentation), skip this check
-    if (maxTabs > 0) {
-      const currentClosingCount = tabsToClose.size;
-      const remainingCount = allTabs.length - currentClosingCount;
-
-      if (remainingCount > maxTabs) {
-        const extraToClose = remainingCount - maxTabs;
-        let closedCount = 0;
-
-        for (const tab of sortedTabs) {
-          if (closedCount >= extraToClose) break;
-          if (tab.id && !tab.active && !tab.pinned && !tabsToClose.has(tab.id)) {
-            const domain = getDomain(tab.url);
-            const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
-            if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
-              tabsToClose.add(tab.id);
-              closedCount++;
-            }
-          }
-        }
-      }
-    }
-
-    const finalIdsToClose = Array.from(tabsToClose);
-
-    if (finalIdsToClose.length > 0) {
-      await chrome.tabs.remove(finalIdsToClose);
-      console.log('Closed tabs:', finalIdsToClose);
+    // Close tabs and notify
+    if (result.tabIdsToClose.length > 0) {
+      await chrome.tabs.remove(result.tabIdsToClose);
+      console.log('Closed tabs:', result.tabIdsToClose);
 
       if (notificationsEnabled) {
         chrome.notifications.create(
@@ -262,7 +162,7 @@ export async function applyCleanupRules() {
             type: 'basic',
             iconUrl: chrome.runtime.getURL('icons/icon128.png'),
             title: 'Tabs Cleaned',
-            message: `Automatically closed ${finalIdsToClose.length} inactive tab(s).`,
+            message: `Automatically closed ${result.tabIdsToClose.length} inactive tab(s).`,
           },
           () => {
             if (chrome.runtime.lastError) {
