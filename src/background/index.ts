@@ -142,7 +142,7 @@ export async function applyCleanupRules() {
               if (chrome.runtime.lastError) {
                 console.warn('Notification error:', chrome.runtime.lastError.message);
               }
-            }
+            },
           );
         }
       }
@@ -180,7 +180,7 @@ export async function applyCleanupRules() {
             if (chrome.runtime.lastError) {
               console.warn('Notification error:', chrome.runtime.lastError.message);
             }
-          }
+          },
         );
       }
     }
@@ -275,10 +275,14 @@ export async function handleCommand(command: string): Promise<void> {
     console.log('Manual cleanup triggered via keyboard shortcut');
     await applyCleanupRules();
   } else if (command === 'toggle-clean') {
-    const settings = await getSettings();
-    const newEnabled = !settings.enabled;
-    await saveSettings({ enabled: newEnabled });
-    console.log(`Auto-clean ${newEnabled ? 'enabled' : 'disabled'} via keyboard shortcut`);
+    try {
+      const settings = await getSettings();
+      const newEnabled = !settings.enabled;
+      await saveSettings({ enabled: newEnabled });
+      console.log(`Auto-clean ${newEnabled ? 'enabled' : 'disabled'} via keyboard shortcut`);
+    } catch (error) {
+      console.error('Error toggling auto-clean via shortcut:', error);
+    }
   }
 }
 
