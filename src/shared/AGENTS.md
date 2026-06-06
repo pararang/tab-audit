@@ -7,9 +7,7 @@
 | File | Exports | Used By |
 |------|---------|---------|
 | `settings.ts` | `Settings` interface, `DEFAULT_SETTINGS`, `getSettings()`, `saveSettings()` | Every module |
-| `types.ts` | `TabRule`, `CleanupSettings` — legacy types, minimal usage | Background |
 | `domain.ts` | `getDomain(url)`, `domainMatches(domain, pattern)` | Cleanup rules |
-| `constants.ts` | `DEFAULT_IDLE_TIME`, `MAX_TABS` — duplicates values in `DEFAULT_SETTINGS` | Various |
 | `utils.ts` | General utility functions | Various |
 | `__mocks__/chrome.ts` | Mock `chrome.*` API surface for cross-module tests | Tests across all modules |
 
@@ -21,6 +19,5 @@
 
 ## Gotchas
 
-- `constants.ts` defaults duplicate `DEFAULT_SETTINGS` — update both when changing defaults
 - `getSettings()` falls back to `DEFAULT_SETTINGS` on error — test error paths
 - Modifying `Settings` interface breaks ALL consumers — update adapters, background, popup, options in same PR
