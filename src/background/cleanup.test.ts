@@ -235,6 +235,24 @@ describe('Rule 5 — Duplicate tabs', () => {
     const r = run({ tabs: [t1, t2] });
     expect(r.tabIdsToClose).toEqual([]);
   });
+
+  it('uses custom getLastActivity for duplicate sorting', () => {
+    // Tab 1 has fresh lastAccessed but custom activity says old
+    // Tab 2 has old lastAccessed but custom activity says fresh
+    const customActivity = new Map<number, number>([
+      [1, Date.now() - 100_000], // custom: tab 1 is old
+      [2, Date.now()], // custom: tab 2 is recent
+    ]);
+    const t1 = tab({ id: 1, lastAccessed: Date.now(), url: 'https://example.com' });
+    const t2 = tab({ id: 2, lastAccessed: Date.now() - 100_000, url: 'https://example.com' });
+    const r = run({
+      tabs: [t1, t2],
+      getLastActivity: (t) => customActivity.get(t.id ?? -1) ?? t.lastAccessed ?? 0,
+    });
+    // Without custom activity, tab 2 would be closed (older lastAccessed).
+    // With custom activity, tab 1 should be closed (older custom activity).
+    expect(r.tabIdsToClose).toEqual([1]);
+  });
 });
 
 // ---------------------------------------------------------------------------

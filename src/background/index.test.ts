@@ -235,7 +235,7 @@ describe('getDuplicateTabs', () => {
       createTab({ id: 1, url: 'https://a.com', lastAccessed: 100 }),
       createTab({ id: 2, url: 'https://b.com', lastAccessed: 200 }),
     ];
-    expect(getDuplicateTabs(tabs)).toEqual([]);
+    expect(getDuplicateTabs(tabs, (t) => t.lastAccessed || 0)).toEqual([]);
   });
 
   it('should identify duplicate URLs', () => {
@@ -244,7 +244,7 @@ describe('getDuplicateTabs', () => {
       createTab({ id: 2, url: 'https://example.com', lastAccessed: 200 }),
       createTab({ id: 3, url: 'https://example.com', lastAccessed: 150 }),
     ];
-    const duplicates = getDuplicateTabs(tabs);
+    const duplicates = getDuplicateTabs(tabs, (t) => t.lastAccessed || 0);
     expect(duplicates).toHaveLength(2);
     expect(duplicates).not.toContain(2);
   });
@@ -254,7 +254,7 @@ describe('getDuplicateTabs', () => {
       createTab({ id: 1, url: 'https://example.com', active: true, lastAccessed: 50 }),
       createTab({ id: 2, url: 'https://example.com', lastAccessed: 200 }),
     ];
-    const duplicates = getDuplicateTabs(tabs);
+    const duplicates = getDuplicateTabs(tabs, (t) => t.lastAccessed || 0);
     expect(duplicates).toEqual([2]);
   });
 
@@ -264,18 +264,18 @@ describe('getDuplicateTabs', () => {
       createTab({ id: 2, url: undefined, lastAccessed: 200 }),
       createTab({ id: 3, url: 'https://example.com', lastAccessed: 150 }),
     ];
-    const duplicates = getDuplicateTabs(tabs);
+    const duplicates = getDuplicateTabs(tabs, (t) => t.lastAccessed || 0);
     // Tab 1 is older (100) than tab 3 (150), so tab 1 is the duplicate
     expect(duplicates).toEqual([1]);
   });
 
   it('should handle single tab', () => {
     const tabs = [createTab({ id: 1, url: 'https://example.com', lastAccessed: 100 })];
-    expect(getDuplicateTabs(tabs)).toEqual([]);
+    expect(getDuplicateTabs(tabs, (t) => t.lastAccessed || 0)).toEqual([]);
   });
 
   it('should handle empty array', () => {
-    expect(getDuplicateTabs([])).toEqual([]);
+    expect(getDuplicateTabs([], (t) => t.lastAccessed || 0)).toEqual([]);
   });
 
   it('should not include active tabs in duplicates', () => {
@@ -284,7 +284,7 @@ describe('getDuplicateTabs', () => {
       createTab({ id: 2, url: 'https://example.com', lastAccessed: 200 }),
       createTab({ id: 3, url: 'https://example.com', lastAccessed: 150 }),
     ];
-    const duplicates = getDuplicateTabs(tabs);
+    const duplicates = getDuplicateTabs(tabs, (t) => t.lastAccessed || 0);
     expect(duplicates).not.toContain(1);
     expect(duplicates).toContain(2);
     expect(duplicates).toContain(3);
@@ -1060,7 +1060,7 @@ describe('getDuplicateTabs edge cases', () => {
       { id: 2, url: 'https://example.com#section2', active: false, lastAccessed: 200 },
       { id: 3, url: 'https://example.com', active: false, lastAccessed: 150 },
     ];
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     // All URLs are different due to fragments, so no duplicates
     expect(duplicates.length).toBe(0);
   });
@@ -1071,7 +1071,7 @@ describe('getDuplicateTabs edge cases', () => {
       { id: 1, url: 'https://example.com?a=1', active: false, lastAccessed: 100 },
       { id: 2, url: 'https://example.com?b=2', active: false, lastAccessed: 200 },
     ];
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     expect(duplicates.length).toBe(0);
   });
 
@@ -1080,7 +1080,7 @@ describe('getDuplicateTabs edge cases', () => {
       { id: 1, url: 'https://example.com', active: true, lastAccessed: 100 },
       { id: 2, url: 'https://example.com', active: false, lastAccessed: 200 },
     ];
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     expect(duplicates).toContain(2);
   });
 
@@ -1095,7 +1095,7 @@ describe('getDuplicateTabs edge cases', () => {
       });
     }
     const startTime = Date.now();
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     const elapsed = Date.now() - startTime;
     expect(elapsed).toBeLessThan(100);
     expect(duplicates.length).toBeGreaterThan(0);
@@ -1106,7 +1106,7 @@ describe('getDuplicateTabs edge cases', () => {
       { id: 1, url: 'chrome://settings', active: false, lastAccessed: 100 },
       { id: 2, url: 'chrome://settings', active: false, lastAccessed: 200 },
     ];
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     expect(duplicates).toContain(1);
   });
 
@@ -1116,7 +1116,7 @@ describe('getDuplicateTabs edge cases', () => {
       { id: 1, url: 'https://example.com', active: false, pinned: true, lastAccessed: 200 },
       { id: 2, url: 'https://example.com', active: false, pinned: false, lastAccessed: 100 },
     ];
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     expect(duplicates).not.toContain(1);
     expect(duplicates).toContain(2);
   });
@@ -1128,7 +1128,7 @@ describe('getDuplicateTabs edge cases', () => {
       { id: 2, url: 'https://example.com', active: false, pinned: false, lastAccessed: 100 },
       { id: 3, url: 'https://example.com', active: false, pinned: false, lastAccessed: 150 },
     ];
-    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[], (t) => t.lastAccessed || 0);
     expect(duplicates).not.toContain(1);
     expect(duplicates).not.toContain(3); // newest non-pinned is kept
     expect(duplicates).toContain(2);
