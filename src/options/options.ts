@@ -179,11 +179,17 @@ export function bindEventListeners(elements: OptionsFormElements): void {
       const localData = (await chrome.storage.local.get([
         'tabsCleanedToday',
         'tabsCleanedDate',
-      ])) as { tabsCleanedToday?: number; tabsCleanedDate?: string };
+        'tabActivityMap',
+      ])) as {
+        tabsCleanedToday?: number;
+        tabsCleanedDate?: string;
+        tabActivityMap?: Record<string, number>;
+      };
       const exportData = {
         settings,
         tabsCleanedToday: localData.tabsCleanedToday ?? 0,
         tabsCleanedDate: localData.tabsCleanedDate ?? new Date().toISOString().split('T')[0],
+        tabActivityMap: localData.tabActivityMap ?? {},
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
         type: 'application/json',
@@ -237,15 +243,17 @@ export function bindEventListeners(elements: OptionsFormElements): void {
 
       await saveSettings(fullSettings);
 
-      // Restore local storage data (tabsCleanedToday, tabsCleanedDate)
+      // Restore local storage data (tabsCleanedToday, tabsCleanedDate, tabActivityMap)
       if (isNewFormat) {
         const exportData = rawParsed as {
           tabsCleanedToday?: number;
           tabsCleanedDate?: string;
+          tabActivityMap?: Record<string, number>;
         };
         await chrome.storage.local.set({
           tabsCleanedToday: exportData.tabsCleanedToday ?? 0,
           tabsCleanedDate: exportData.tabsCleanedDate ?? new Date().toISOString().split('T')[0],
+          tabActivityMap: exportData.tabActivityMap ?? {},
         });
       }
 
