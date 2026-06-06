@@ -1,15 +1,26 @@
 /**
  * Minimal storage abstraction for settings persistence.
- * Default implementation uses chrome.storage.sync; can be swapped for testing.
+ * Default implementation uses chrome.storage.sync/local; can be swapped for testing.
  */
 export interface SettingsStorage {
   get(keys: string[]): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
 }
 
-const defaultStorage: SettingsStorage = {
+/** Storage keys that go to chrome.storage.sync (small, scalar values) */
+const SYNC_KEYS = new Set(['enabled', 'idleTimeout', 'maxTabs', 'notificationsEnabled', 'theme']);
+
+/** Storage keys that go to chrome.storage.local (large lists that can exceed sync quota) */
+const LOCAL_KEYS = new Set(['whitelist', 'blacklist', 'whitelistedTabGroups']);
+
+const defaultSyncStorage: SettingsStorage = {
   get: (keys) => chrome.storage.sync.get(keys),
   set: (items) => chrome.storage.sync.set(items),
+};
+
+const defaultLocalStorage: SettingsStorage = {
+  get: (keys) => chrome.storage.local.get(keys),
+  set: (items) => chrome.storage.local.set(items),
 };
 
 /**
@@ -49,14 +60,24 @@ export const DEFAULT_SETTINGS: Settings = {
 /**
  * Retrieves user settings from storage.
  * Merges stored settings with defaults for missing values.
- * @param storage - Storage backend (defaults to chrome.storage.sync)
+ * Reads from both sync and local storage backends.
+ * @param syncStore - Sync storage backend (defaults to chrome.storage.sync)
+ * @param localStore - Local storage backend (defaults to chrome.storage.local)
  * @returns Promise resolving to current settings
  */
-export async function getSettings(storage?: SettingsStorage): Promise<Settings> {
-  const store = storage ?? defaultStorage;
+export async function getSettings(
+  syncStore?: SettingsStorage,
+  localStore?: SettingsStorage,
+): Promise<Settings> {
+  const sync = syncStore ?? defaultSyncStorage;
+  const local = localStore ?? defaultLocalStorage;
+
   try {
-    const result = await store.get(Object.keys(DEFAULT_SETTINGS));
-    return { ...DEFAULT_SETTINGS, ...result };
+    const [syncResult, localResult] = await Promise.all([
+      sync.get([...SYNC_KEYS]),
+      local.get([...LOCAL_KEYS]),
+    ]);
+    return { ...DEFAULT_SETTINGS, ...syncResult, ...localResult };
   } catch (error) {
     console.error('Error getting settings:', error);
     return DEFAULT_SETTINGS;
@@ -65,19 +86,34 @@ export async function getSettings(storage?: SettingsStorage): Promise<Settings> 
 
 /**
  * Saves partial settings to storage.
- * Only updates specified fields, leaves others unchanged.
+ * Routes each key to the appropriate backend (sync for scalars, local for lists).
  * @param settings - Partial settings object to save
- * @param storage - Storage backend (defaults to chrome.storage.sync)
+ * @param syncStore - Sync storage backend (defaults to chrome.storage.sync)
+ * @param localStore - Local storage backend (defaults to chrome.storage.local)
  * @returns Promise resolving when complete
+ * @throws Error if storage write fails
  */
 export async function saveSettings(
   settings: Partial<Settings>,
-  storage?: SettingsStorage,
+  syncStore?: SettingsStorage,
+  localStore?: SettingsStorage,
 ): Promise<void> {
-  const store = storage ?? defaultStorage;
-  try {
-    await store.set(settings);
-  } catch (error) {
-    console.error('Error saving settings:', error);
+  const sync = syncStore ?? defaultSyncStorage;
+  const local = localStore ?? defaultLocalStorage;
+
+  const syncItems: Record<string, unknown> = {};
+  const localItems: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(settings)) {
+    if (LOCAL_KEYS.has(key)) {
+      localItems[key] = value;
+    } else {
+      syncItems[key] = value;
+    }
   }
+
+  await Promise.all([
+    Object.keys(syncItems).length > 0 ? sync.set(syncItems) : Promise.resolve(),
+    Object.keys(localItems).length > 0 ? local.set(localItems) : Promise.resolve(),
+  ]);
 }
