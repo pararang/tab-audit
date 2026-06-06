@@ -21,8 +21,7 @@ export function isValidSettings(data: unknown): data is Partial<Settings> {
       settings.theme === 'system') &&
     (settings.whitelist === undefined || Array.isArray(settings.whitelist)) &&
     (settings.blacklist === undefined || Array.isArray(settings.blacklist)) &&
-    (settings.whitelistedTabGroups === undefined ||
-      Array.isArray(settings.whitelistedTabGroups)) &&
+    (settings.whitelistedTabGroups === undefined || Array.isArray(settings.whitelistedTabGroups)) &&
     (settings.notificationsEnabled === undefined ||
       typeof settings.notificationsEnabled === 'boolean')
   );
@@ -56,7 +55,9 @@ export function getFormElements(): OptionsFormElements | null {
   const theme = document.getElementById('theme') as HTMLSelectElement;
   const whitelist = document.getElementById('whitelist') as HTMLTextAreaElement;
   const blacklist = document.getElementById('blacklist') as HTMLTextAreaElement;
-  const whitelistedTabGroups = document.getElementById('whitelisted-tab-groups') as HTMLTextAreaElement;
+  const whitelistedTabGroups = document.getElementById(
+    'whitelisted-tab-groups',
+  ) as HTMLTextAreaElement;
   const notificationsEnabled = document.getElementById('notifications-enabled') as HTMLInputElement;
   const backupBtn = document.getElementById('backup-btn') as HTMLButtonElement;
   const restoreBtn = document.getElementById('restore-btn') as HTMLButtonElement;
@@ -113,6 +114,7 @@ export async function loadSettingsToForm(elements: OptionsFormElements): Promise
  * Saves settings from form to storage.
  * @param elements - Form elements to read from
  * @returns Saved settings object
+ * @throws If getSettings or saveSettings fails
  */
 export async function saveSettingsFromForm(elements: OptionsFormElements): Promise<Settings> {
   // Preserve current enabled state (options form has no enabled toggle)
@@ -120,11 +122,17 @@ export async function saveSettingsFromForm(elements: OptionsFormElements): Promi
 
   // Validate maxTabs: must be a positive integer, fall back to default if invalid
   const parsedMaxTabs = parseInt(elements.maxTabs.value);
-  const maxTabs = Number.isInteger(parsedMaxTabs) && parsedMaxTabs >= 0 ? parsedMaxTabs : DEFAULT_SETTINGS.maxTabs;
+  const maxTabs =
+    Number.isInteger(parsedMaxTabs) && parsedMaxTabs >= 0
+      ? parsedMaxTabs
+      : DEFAULT_SETTINGS.maxTabs;
 
   // Validate idleTimeout: must be a non-negative integer, fall back to default if invalid
   const parsedIdleTimeout = parseInt(elements.idleTimeout.value);
-  const idleTimeout = Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout >= 0 ? parsedIdleTimeout : DEFAULT_SETTINGS.idleTimeout;
+  const idleTimeout =
+    Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout >= 0
+      ? parsedIdleTimeout
+      : DEFAULT_SETTINGS.idleTimeout;
 
   const newSettings: Settings = {
     enabled: currentSettings.enabled,
@@ -255,7 +263,20 @@ export async function initOptions(): Promise<void> {
     return;
   }
 
-  await loadSettingsToForm(elements);
+  try {
+    await loadSettingsToForm(elements);
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    alert('Failed to load settings. Using defaults.');
+    // Populate form with defaults so the page is still usable
+    elements.idleTimeout.value = DEFAULT_SETTINGS.idleTimeout.toString();
+    elements.maxTabs.value = DEFAULT_SETTINGS.maxTabs.toString();
+    elements.theme.value = DEFAULT_SETTINGS.theme;
+    elements.whitelist.value = '';
+    elements.blacklist.value = '';
+    elements.whitelistedTabGroups.value = '';
+    elements.notificationsEnabled.checked = DEFAULT_SETTINGS.notificationsEnabled;
+  }
   bindEventListeners(elements);
 }
 
