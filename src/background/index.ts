@@ -210,10 +210,12 @@ chrome.runtime.onStartup.addListener(() => {
 // Listen for manual cleanup requests
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'runCleanup') {
-    applyCleanupRules();
-    sendResponse({ status: 'started' });
+    (async () => {
+      await applyCleanupRules();
+      sendResponse({ status: 'started' });
+    })();
+    return true; // keep channel open for async sendResponse
   }
-  return true;
 });
 
 // --- Tab Activity Tracking ---
