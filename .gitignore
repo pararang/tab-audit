@@ -52,7 +52,5 @@ Thumbs.db
 *.tmp
 *.temp
 
-AGENT*.md
-
 # Sisyphus planning artifacts
 .sisyphus/

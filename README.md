@@ -13,11 +13,17 @@ A Chrome extension that automatically audits and closes browser tabs to free mem
 - **Idle Tab Cleanup** - Automatically close tabs that haven't been accessed for a specified time
 - **Duplicate Tab Detection** - Identify and close duplicate tabs (keeps the most recently accessed)
 - **Domain Whitelist/Blacklist** - Always protect important domains or automatically close specific domains
+- **Tab Group Whitelist** - Protect entire tab groups by name from cleanup
 - **Max Tab Limit** - Enforce a maximum number of tabs by closing the oldest inactive ones
 - **Activity Tracking** - Robust tab activity detection that resets the idle timer when you interact with tabs
-- **Notifications** - Get notified when tabs are automatically closed
+- **Notifications** - Get notified when tabs are automatically closed, or when approaching the tab limit
+- **Warning Icon** - Extension icon turns yellow when nearing the configured tab limit
+- **Theme Support** - Light, dark, or system-following theme
 - **Manual Cleanup** - Trigger cleanup on demand from the popup
+- **Tab Stats** - View living tabs, cleaned count, and top domain in the popup
+- **Settings Backup/Restore** - Export and import settings as JSON from the options page
 - **QR Code Generation** - Generate QR codes for the current page to easily share or open on other devices
+- **Keyboard Shortcuts** - Run cleanup or toggle auto-clean with configurable shortcuts
 
 ## Installation
 
@@ -42,13 +48,13 @@ A Chrome extension that automatically audits and closes browser tabs to free mem
 2. Install dependencies:
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. Build the extension:
 
    ```bash
-   npm run build:prod
+   pnpm build:prod
    ```
 
 4. Load in Chrome:
@@ -64,176 +70,35 @@ Coming soon!
 
 The extension starts **disabled by default** to prevent unexpected tab closures during auditing. Configure the following settings:
 
-| Setting           | Description                                    | Default |
-| ----------------- | ---------------------------------------------- | ------- |
-| **Enabled**       | Whether automatic auditing is active           | `false` |
-| **Idle Timeout**  | Minutes before a tab is considered idle        | `30`    |
-| **Max Tabs**      | Maximum number of tabs allowed (0 = unlimited) | `50`    |
-| **Whitelist**     | Domains to always protect from auditing        | `[]`    |
-| **Blacklist**     | Domains to automatically close (unless active) | `[]`    |
-| **Notifications** | Show notifications when tabs are closed        | `true`  |
+| Setting | Description | Default |
+|---|---|---|
+| **Enabled** | Whether automatic auditing is active | `false` |
+| **Idle Timeout** | Minutes before a tab is considered idle | `30` |
+| **Max Tabs** | Maximum number of tabs allowed (`0` = unlimited) | `50` |
+| **Whitelist** | Domains to always protect from auditing | `[]` |
+| **Blacklist** | Domains to automatically close (unless active) | `[]` |
+| **Whitelisted Tab Groups** | Tab group names to protect from cleanup | `[]` |
+| **Notifications** | Show notifications when tabs are closed | `true` |
+| **Theme** | UI theme: `light`, `dark`, or `system` | `system` |
 
-### Cleanup Rules (in order)
+### Cleanup Rules
 
-1. **Whitelist check** - Skip any tab on the whitelist
-2. **Blacklist check** - Close any tab on the blacklist (unless active)
-3. **Idle timeout** - Close tabs idle beyond the configured timeout
-4. **Duplicate tabs** - Close duplicate tabs (keeps the most recently accessed)
-5. **Max tabs** - Close oldest inactive tabs if over the limit
+Tabs are evaluated in order: tab group whitelist → domain whitelist → blacklist → idle timeout → duplicate detection → max tab limit. See `AGENTS.md` for details.
 
 ### Domain Matching
 
-Domain entries in the whitelist and blacklist support:
-
-- **Exact match**: `google.com` matches `google.com`
-- **Subdomain match**: `google.com` matches `mail.google.com`, `docs.google.com`, etc.
-- **Partial match not supported**: `google.com` does NOT match `fakegoogle.com`
+Exact and subdomain matching supported; partial match not supported. See `AGENTS.md` for technical rules.
 
 ## Development
 
-### Prerequisites
+See `AGENTS.md` for build commands, testing, linting, project structure, release process, and contributing workflow.
 
-- Node.js 18+
-- npm
-
-### Setup
-
-```bash
-npm install
-```
-
-### Build Commands
-
-```bash
-# Development build
-npm run build
-
-# Production build (minified)
-npm run build:prod
-
-# Watch mode (rebuilds on file changes)
-npm run dev
-
-# Package for Chrome Web Store
-npm run package
-```
-
-### Release Process
-
-Automated releases are triggered by pushing tags:
-
-```bash
-# Create and push a new version tag
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-This will:
-- Run tests and build the extension
-- Create `tab-audit.zip` package
-- Generate GitHub release with downloadable files
-- Include release notes automatically
-
-### Lint & Format
-
-```bash
-# Lint code
-npm run lint
-
-# Lint and auto-fix
-npm run lint:fix
-
-# Check formatting
-npm run format:check
-
-# Format code
-npm run format
-```
-
-### Testing & Coverage
-
-```bash
-# Run tests in watch mode
-npm run test
-
-# Run tests once
-npm run test:run
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-**Coverage Requirement: Minimum 85%**
-
-- All new code must be tested
-- Coverage must not decrease from baseline
-- Mock files (`__mocks__`) are excluded from coverage
-- Run `npm run test:coverage` before committing
-
-### Project Structure
-
-```
-src/
-├── adapters/         # External system adapters
-├── background/       # Service worker (main logic)
-│   └── index.ts      # Tab cleanup rules, activity tracking
-├── core/             # Business logic layer
-├── icons/            # Extension icons
-├── options/          # Extension options page
-├── platform/         # Platform-specific code
-├── popup/            # Browser action popup UI
-├── shared/           # Shared code
-│   ├── settings.ts   # Settings interface and storage
-│   ├── types.ts      # TypeScript interfaces
-│   ├── constants.ts  # Shared constants
-│   ├── domain.ts     # Domain parsing utilities
-│   └── utils.ts      # Utility functions
-└── manifest.json     # Chrome extension manifest (V3)
-```
-
-### Debugging
+## Debugging
 
 1. Open `chrome://extensions/`
-2. Find "Tab Auto Clean"
-3. Click "Service worker" to open the background script console
+2. Find "Tab Auditor"
+3. Click **Service worker** to open the background script console
 4. Check for errors and logs
-
-## Contributing
-
-This project uses **GitHub Issues** for task and issue tracking. All interactions with the repository should use `gh` CLI.
-
-### Task Tracking with GitHub Issues
-
-```bash
-# List all open issues
-gh issue list
-
-# View issue details
-gh issue view <number>
-
-# Create a new issue
-gh issue create --title "Brief description of the task" --body "Details..."
-
-# Comment on an issue
-gh issue comment <number> --body "Update on progress..."
-
-# Close/resolve an issue
-gh issue close <number>
-
-# Reopen an issue
-gh issue reopen <number>
-```
-
-### Workflow
-
-1. Before starting work, check `gh issue list` for available tasks
-2. Comment on the issue with `gh issue comment <number> --body "Taking this on"` when you begin
-3. Make small, atomic commits after each logical change
-4. Use conventional commits: `feat:`, `fix:`, `refactor:`, etc.
-5. Work directly on the `main` branch for development tasks
-6. Run linter and formatter before committing
-7. Write descriptive commit messages explaining "why" not just "what"
-8. Close issues with `gh issue close <number>` when complete
 
 ## License
 
