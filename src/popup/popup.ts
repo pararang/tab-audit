@@ -88,10 +88,13 @@ export function getPopupElements(): PopupElements | null {
  * Updates the tab count display.
  * @param elements - Popup elements
  */
-export function updateTabCount(elements: PopupElements): void {
-  chrome.tabs.query({}, (tabs) => {
+export async function updateTabCount(elements: PopupElements): Promise<void> {
+  try {
+    const tabs = await chrome.tabs.query({});
     elements.tabCount.textContent = tabs.length.toString();
-  });
+  } catch {
+    elements.tabCount.textContent = '0';
+  }
 }
 
 /**
@@ -191,7 +194,7 @@ export async function initPopup(): Promise<void> {
   applyTheme(settings.theme);
 
   // Update tab count and stats on load
-  updateTabCount(elements);
+  await updateTabCount(elements);
   await updateStats(elements);
 
   // Toggle button click

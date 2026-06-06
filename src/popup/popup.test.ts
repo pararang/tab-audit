@@ -318,7 +318,7 @@ describe('updateTabCount', () => {
     vi.clearAllMocks();
   });
 
-  it('should update tab count display', () => {
+  it('should update tab count display', async () => {
     const mockElements: PopupElements = {
       tabCount: { textContent: '' } as HTMLElement,
       cleanedCount: {} as HTMLElement,
@@ -328,16 +328,14 @@ describe('updateTabCount', () => {
       qrCanvas: null as unknown as HTMLCanvasElement,
       qrUrl: null as unknown as HTMLElement,
     };
-    chromeMock.tabs.query.mockImplementation((query: any, callback: any) => {
-      callback([{ id: 1 }, { id: 2 }, { id: 3 }]);
-    });
+    chromeMock.tabs.query.mockResolvedValue([{ id: 1 }, { id: 2 }, { id: 3 }]);
 
-    updateTabCount(mockElements);
+    await updateTabCount(mockElements);
 
     expect(mockElements.tabCount.textContent).toBe('3');
   });
 
-  it('should show 0 for no tabs', () => {
+  it('should show 0 for no tabs', async () => {
     const mockElements: PopupElements = {
       tabCount: { textContent: '' } as HTMLElement,
       cleanedCount: {} as HTMLElement,
@@ -347,11 +345,26 @@ describe('updateTabCount', () => {
       qrCanvas: null as unknown as HTMLCanvasElement,
       qrUrl: null as unknown as HTMLElement,
     };
-    chromeMock.tabs.query.mockImplementation((query: any, callback: any) => {
-      callback([]);
-    });
+    chromeMock.tabs.query.mockResolvedValue([]);
 
-    updateTabCount(mockElements);
+    await updateTabCount(mockElements);
+
+    expect(mockElements.tabCount.textContent).toBe('0');
+  });
+
+  it('should show 0 on error', async () => {
+    const mockElements: PopupElements = {
+      tabCount: { textContent: '' } as HTMLElement,
+      cleanedCount: {} as HTMLElement,
+      topDomain: {} as HTMLElement,
+      toggleButton: {} as HTMLButtonElement,
+      settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
+    };
+    chromeMock.tabs.query.mockRejectedValue(new Error('API error'));
+
+    await updateTabCount(mockElements);
 
     expect(mockElements.tabCount.textContent).toBe('0');
   });
