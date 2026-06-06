@@ -505,6 +505,52 @@ describe('saveSettingsFromForm', () => {
 
     expect(result.idleTimeout).toBe(DEFAULT_SETTINGS.idleTimeout);
   });
+
+  it('should preserve enabled=true when saving from options', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '30' } as HTMLInputElement,
+      maxTabs: { value: '50' } as HTMLInputElement,
+      theme: { value: 'light' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({ enabled: true });
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.enabled).toBe(true);
+  });
+
+  it('should preserve enabled=false when saving from options', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '30' } as HTMLInputElement,
+      maxTabs: { value: '50' } as HTMLInputElement,
+      theme: { value: 'light' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({ enabled: false });
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.enabled).toBe(false);
+  });
 });
 
 describe('bindEventListeners', () => {
