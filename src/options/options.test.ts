@@ -378,7 +378,6 @@ describe('saveSettingsFromForm', () => {
     expect(result.blacklist).toEqual(['c.com']);
     expect(result.whitelistedTabGroups).toEqual(['Work', 'Research']);
     expect(result.notificationsEnabled).toBe(true);
-    expect(result.warningShown).toBe(false);
     // @ts-expect-error - chrome is mocked
     expect(chrome.storage.sync.set).toHaveBeenCalled();
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'light');

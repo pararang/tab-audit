@@ -12,7 +12,6 @@ function makeSettings(overrides: Partial<Settings> = {}): Settings {
     blacklist: [],
     whitelistedTabGroups: [],
     notificationsEnabled: true,
-    warningShown: false,
     theme: 'system',
     ...overrides,
   };

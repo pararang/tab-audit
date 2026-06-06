@@ -30,8 +30,6 @@ export interface Settings {
   whitelistedTabGroups: string[];
   /** Whether to show notifications when tabs are closed */
   notificationsEnabled: boolean;
-  /** Whether the warning notification has been shown */
-  warningShown: boolean;
   /** Theme preference: 'light', 'dark', or 'system' */
   theme: 'light' | 'dark' | 'system';
 }
@@ -45,7 +43,6 @@ export const DEFAULT_SETTINGS: Settings = {
   blacklist: [],
   whitelistedTabGroups: [],
   notificationsEnabled: true,
-  warningShown: false,
   theme: 'system',
 };
 
