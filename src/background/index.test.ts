@@ -20,6 +20,10 @@ import { getDomain, domainMatches } from '../shared/domain';
 // Re-import to get applyCleanupRules
 import { applyCleanupRules } from './index';
 
+// Capture the onMessage listener registered during module import
+// @ts-expect-error - chrome is mocked
+const messageListener = chrome.runtime.onMessage.addListener.mock.calls[0][0];
+
 describe('updateTabActivity', () => {
   beforeEach(() => {
     resetTabActivityMap();
@@ -1612,5 +1616,52 @@ describe('applyCleanupRules edge cases', () => {
     // Idle timeout is 60min and all tabs are within that window
     // @ts-expect-error - chrome is mocked
     expect(chrome.tabs.remove).not.toHaveBeenCalled();
+  });
+});
+
+describe('chrome.runtime.onMessage runCleanup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetTabActivityMap();
+  });
+
+  it('should await applyCleanupRules before calling sendResponse', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 30,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([]);
+
+    const sendResponse = vi.fn();
+    const result = messageListener({ action: 'runCleanup' }, {}, sendResponse);
+
+    // Must return true to keep channel open for async response
+    expect(result).toBe(true);
+
+    // sendResponse should not fire synchronously
+    expect(sendResponse).not.toHaveBeenCalled();
+
+    // Wait for the async IIFE to complete
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({ status: 'started' });
+    });
+
+    // Verify cleanup actually ran
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.query).toHaveBeenCalled();
+  });
+
+  it('should return undefined for unknown actions', () => {
+    const sendResponse = vi.fn();
+    const result = messageListener({ action: 'unknown' }, {}, sendResponse);
+
+    expect(result).toBeUndefined();
+    expect(sendResponse).not.toHaveBeenCalled();
   });
 });
