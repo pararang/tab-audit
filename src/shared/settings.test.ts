@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import './__mocks__/chrome';
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from './settings';
 
@@ -63,26 +63,25 @@ describe('getSettings', () => {
     });
   });
 
-  it('should handle storage error gracefully', async () => {
-    // Suppress console.error output during this test
+  it('should throw on storage error instead of returning defaults', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-expect-error - chrome is mocked
     chrome.storage.sync.get.mockRejectedValue(new Error('Storage error'));
 
-    const settings = await getSettings();
+    await expect(getSettings()).rejects.toThrow('Storage error');
 
-    expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
-  it('should handle storage error with different error types', async () => {
+  it('should throw on storage error with different error types', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-expect-error - chrome is mocked
     chrome.storage.sync.get.mockRejectedValue(new Error('Quota exceeded'));
 
-    const settings = await getSettings();
+    await expect(getSettings()).rejects.toThrow('Quota exceeded');
 
-    expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
@@ -119,26 +118,23 @@ describe('saveSettings error handling', () => {
     chrome.storage.sync.set.mockReset();
   });
 
-  it('should handle storage error gracefully', async () => {
-    // Suppress console.error output during this test
+  it('should throw on storage error instead of swallowing it', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-expect-error - chrome is mocked
     chrome.storage.sync.set.mockRejectedValue(new Error('Storage error'));
 
-    // Should not throw
-    await saveSettings({ enabled: true });
+    await expect(saveSettings({ enabled: true })).rejects.toThrow('Storage error');
 
-    // Should log error (console.error is called)
-    // In happy-dom, console.error is mocked by vitest
+    expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
-  it('should handle different storage error types', async () => {
+  it('should throw on different storage error types', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-expect-error - chrome is mocked
     chrome.storage.sync.set.mockRejectedValue(new Error('QuotaExceededError'));
 
-    await saveSettings({ maxTabs: 200 });
+    await expect(saveSettings({ maxTabs: 200 })).rejects.toThrow('QuotaExceededError');
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
@@ -192,17 +188,14 @@ describe('saveSettings', () => {
     });
   });
 
-  it('should handle storage error gracefully', async () => {
-    // Suppress console.error output during this test
+  it('should throw on storage error', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-expect-error - chrome is mocked
     chrome.storage.sync.set.mockRejectedValue(new Error('Storage error'));
 
-    // Should not throw
-    await saveSettings({ enabled: true });
+    await expect(saveSettings({ enabled: true })).rejects.toThrow('Storage error');
 
-    // Should log error (console.error is called)
-    // In happy-dom, console.error is mocked by vitest
+    expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 

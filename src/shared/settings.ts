@@ -59,7 +59,7 @@ export async function getSettings(storage?: SettingsStorage): Promise<Settings> 
     return { ...DEFAULT_SETTINGS, ...result };
   } catch (error) {
     console.error('Error getting settings:', error);
-    return DEFAULT_SETTINGS;
+    throw error;
   }
 }
 
@@ -79,5 +79,6 @@ export async function saveSettings(
     await store.set(settings);
   } catch (error) {
     console.error('Error saving settings:', error);
+    throw error;
   }
 }
