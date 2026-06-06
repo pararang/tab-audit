@@ -31,6 +31,10 @@ function tab(overrides: Partial<chrome.tabs.Tab> = {}): chrome.tabs.Tab {
     title: 'Example',
     lastAccessed: Date.now(),
     groupId: -1,
+    frozen: false,
+    selected: false,
+    discarded: false,
+    autoDiscardable: false,
     ...overrides,
   };
 }
