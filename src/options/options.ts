@@ -176,7 +176,18 @@ export function bindEventListeners(elements: OptionsFormElements): void {
   elements.backupBtn.addEventListener('click', async () => {
     try {
       const settings = await getSettings();
-      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+      const localData = (await chrome.storage.local.get([
+        'tabsCleanedToday',
+        'tabsCleanedDate',
+      ])) as { tabsCleanedToday?: number; tabsCleanedDate?: string };
+      const exportData = {
+        settings,
+        tabsCleanedToday: localData.tabsCleanedToday ?? 0,
+        tabsCleanedDate: localData.tabsCleanedDate ?? new Date().toISOString().split('T')[0],
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json',
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -202,7 +213,13 @@ export function bindEventListeners(elements: OptionsFormElements): void {
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
+      const rawParsed = JSON.parse(text);
+
+      // Support both old format (flat settings) and new format (wrapped with local data)
+      const isNewFormat = rawParsed && typeof rawParsed === 'object' && 'settings' in rawParsed;
+      const data = isNewFormat
+        ? (rawParsed as { settings: Record<string, unknown> }).settings
+        : rawParsed;
 
       if (!isValidSettings(data)) {
         alert('Invalid settings file format');
@@ -219,6 +236,18 @@ export function bindEventListeners(elements: OptionsFormElements): void {
       };
 
       await saveSettings(fullSettings);
+
+      // Restore local storage data (tabsCleanedToday, tabsCleanedDate)
+      if (isNewFormat) {
+        const exportData = rawParsed as {
+          tabsCleanedToday?: number;
+          tabsCleanedDate?: string;
+        };
+        await chrome.storage.local.set({
+          tabsCleanedToday: exportData.tabsCleanedToday ?? 0,
+          tabsCleanedDate: exportData.tabsCleanedDate ?? new Date().toISOString().split('T')[0],
+        });
+      }
 
       // Update form with restored settings
       elements.idleTimeout.value = fullSettings.idleTimeout.toString();
