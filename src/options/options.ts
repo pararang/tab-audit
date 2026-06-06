@@ -115,6 +115,9 @@ export async function loadSettingsToForm(elements: OptionsFormElements): Promise
  * @returns Saved settings object
  */
 export async function saveSettingsFromForm(elements: OptionsFormElements): Promise<Settings> {
+  // Preserve current enabled state (options form has no enabled toggle)
+  const currentSettings = await getSettings();
+
   // Validate maxTabs: must be a positive integer, fall back to default if invalid
   const parsedMaxTabs = parseInt(elements.maxTabs.value);
   const maxTabs = Number.isInteger(parsedMaxTabs) && parsedMaxTabs >= 0 ? parsedMaxTabs : DEFAULT_SETTINGS.maxTabs;
@@ -124,7 +127,7 @@ export async function saveSettingsFromForm(elements: OptionsFormElements): Promi
   const idleTimeout = Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout >= 0 ? parsedIdleTimeout : DEFAULT_SETTINGS.idleTimeout;
 
   const newSettings: Settings = {
-    enabled: true,
+    enabled: currentSettings.enabled,
     idleTimeout,
     maxTabs,
     theme: elements.theme.value as 'light' | 'dark' | 'system',
