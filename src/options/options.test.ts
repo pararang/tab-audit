@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { MockChrome } from '../__test-utils__/chrome-mock';
 
 // Mock Chrome APIs and DOM before importing the module
-import './__mocks__/chrome';
+import '../shared/__mocks__/chrome';
 const chromeMock = chrome as unknown as MockChrome;
 import { applyTheme } from '../shared/theme';
 import {
@@ -17,14 +17,11 @@ import {
 } from './options';
 import { DEFAULT_SETTINGS } from '../shared/settings';
 
-// Get the mockDocumentElement from the global scope
-const mockDocumentElement = (
-  global as unknown as {
-    document?: { documentElement?: { setAttribute: ReturnType<typeof vi.fn> } };
-  }
-).document?.documentElement;
-
 // Mock document.getElementById to return null initially
+const mockDocumentElement = {
+  setAttribute: vi.fn(),
+};
+
 const mockGetElementById = vi.fn();
 vi.stubGlobal('document', {
   getElementById: mockGetElementById,
