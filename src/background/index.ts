@@ -113,7 +113,7 @@ export function getDuplicateTabs(tabs: chrome.tabs.Tab[]): number[] {
       });
       // All except the first one are duplicates (active tab will be first if present)
       tabsWithSameUrl.slice(1).forEach((tab) => {
-        if (tab.id && !tab.active) duplicates.push(tab.id);
+        if (tab.id && !tab.active && !tab.pinned) duplicates.push(tab.id);
       });
     }
   });
@@ -189,7 +189,7 @@ export async function applyCleanupRules() {
     const sortedTabs = [...allTabs].sort((a, b) => (a.lastAccessed || 0) - (b.lastAccessed || 0));
 
     allTabs.forEach((tab) => {
-      if (!tab.id || tab.active) return; // Never close the active tab
+      if (!tab.id || tab.active || tab.pinned) return; // Never close the active or pinned tabs
 
       const domain = getDomain(tab.url);
 
@@ -217,7 +217,7 @@ export async function applyCleanupRules() {
     duplicates.forEach((id) => {
       // Re-verify it's not whitelisted or active (though getDuplicateTabs check URL, active tab might be one of them)
       const tab = allTabs.find((t) => t.id === id);
-      if (tab && !tab.active) {
+      if (tab && !tab.active && !tab.pinned) {
         const domain = getDomain(tab.url);
         const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
         if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
@@ -227,21 +227,24 @@ export async function applyCleanupRules() {
     });
 
     // 6. Max tabs check (close oldest inactive until below limit)
-    const currentClosingCount = tabsToClose.size;
-    const remainingCount = allTabs.length - currentClosingCount;
+    // maxTabs <= 0 means unlimited (per documentation), skip this check
+    if (maxTabs > 0) {
+      const currentClosingCount = tabsToClose.size;
+      const remainingCount = allTabs.length - currentClosingCount;
 
-    if (remainingCount > maxTabs) {
-      const extraToClose = remainingCount - maxTabs;
-      let closedCount = 0;
+      if (remainingCount > maxTabs) {
+        const extraToClose = remainingCount - maxTabs;
+        let closedCount = 0;
 
-      for (const tab of sortedTabs) {
-        if (closedCount >= extraToClose) break;
-        if (tab.id && !tab.active && !tabsToClose.has(tab.id)) {
-          const domain = getDomain(tab.url);
-          const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
-          if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
-            tabsToClose.add(tab.id);
-            closedCount++;
+        for (const tab of sortedTabs) {
+          if (closedCount >= extraToClose) break;
+          if (tab.id && !tab.active && !tab.pinned && !tabsToClose.has(tab.id)) {
+            const domain = getDomain(tab.url);
+            const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
+            if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {
+              tabsToClose.add(tab.id);
+              closedCount++;
+            }
           }
         }
       }
@@ -338,6 +341,10 @@ export function handleStorageChanged(
     if (changes.maxTabs || changes.enabled) {
       warningActive = false;
       setWarningIcon(false).catch(() => {});
+    }
+    // Immediately apply cleanup rules when maxTabs changes (bug fix)
+    if (changes.maxTabs) {
+      applyCleanupRules();
     }
   }
 }

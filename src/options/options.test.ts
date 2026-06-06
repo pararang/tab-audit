@@ -404,6 +404,107 @@ describe('saveSettingsFromForm', () => {
     expect(result.whitelist).toEqual(['a.com', 'b.com']);
     expect(result.blacklist).toEqual(['c.com']);
   });
+
+  it('should fall back to default maxTabs when input is empty', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '30' } as HTMLInputElement,
+      maxTabs: { value: '' } as HTMLInputElement,
+      theme: { value: 'light' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.maxTabs).toBe(DEFAULT_SETTINGS.maxTabs);
+    expect(result.idleTimeout).toBe(30);
+  });
+
+  it('should fall back to default when maxTabs is negative', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '30' } as HTMLInputElement,
+      maxTabs: { value: '-5' } as HTMLInputElement,
+      theme: { value: 'system' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.maxTabs).toBe(DEFAULT_SETTINGS.maxTabs);
+  });
+
+  it('should accept maxTabs of 0 (unlimited)', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '30' } as HTMLInputElement,
+      maxTabs: { value: '0' } as HTMLInputElement,
+      theme: { value: 'system' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.maxTabs).toBe(0);
+  });
+
+  it('should accept idleTimeout of 0 (immediately idle)', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '0' } as HTMLInputElement,
+      maxTabs: { value: '50' } as HTMLInputElement,
+      theme: { value: 'system' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.idleTimeout).toBe(0);
+  });
+
+  it('should fall back to default when idleTimeout is negative', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '-1' } as HTMLInputElement,
+      maxTabs: { value: '50' } as HTMLInputElement,
+      theme: { value: 'system' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.idleTimeout).toBe(DEFAULT_SETTINGS.idleTimeout);
+  });
 });
 
 describe('bindEventListeners', () => {
