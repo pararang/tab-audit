@@ -21,6 +21,7 @@ export interface MockTabs {
   remove: MockInstance<any>;
   get: MockInstance<any>;
   onActivated: { addListener: MockInstance<any> };
+  onCreated: { addListener: MockInstance<any> };
   onUpdated: { addListener: MockInstance<any> };
   onRemoved: { addListener: MockInstance<any> };
 }
