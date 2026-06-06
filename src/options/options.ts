@@ -114,6 +114,7 @@ export async function loadSettingsToForm(elements: OptionsFormElements): Promise
  * Saves settings from form to storage.
  * @param elements - Form elements to read from
  * @returns Saved settings object
+ * @throws If getSettings or saveSettings fails
  */
 export async function saveSettingsFromForm(elements: OptionsFormElements): Promise<Settings> {
   // Preserve current enabled state (options form has no enabled toggle)
@@ -264,7 +265,20 @@ export async function initOptions(): Promise<void> {
     return;
   }
 
-  await loadSettingsToForm(elements);
+  try {
+    await loadSettingsToForm(elements);
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    alert('Failed to load settings. Using defaults.');
+    // Populate form with defaults so the page is still usable
+    elements.idleTimeout.value = DEFAULT_SETTINGS.idleTimeout.toString();
+    elements.maxTabs.value = DEFAULT_SETTINGS.maxTabs.toString();
+    elements.theme.value = DEFAULT_SETTINGS.theme;
+    elements.whitelist.value = '';
+    elements.blacklist.value = '';
+    elements.whitelistedTabGroups.value = '';
+    elements.notificationsEnabled.checked = DEFAULT_SETTINGS.notificationsEnabled;
+  }
   bindEventListeners(elements);
 }
 
