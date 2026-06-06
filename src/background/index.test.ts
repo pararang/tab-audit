@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { MockChrome } from '../__test-utils__/chrome-mock';
 import '../shared/__mocks__/chrome';
 const chromeMock = chrome as unknown as MockChrome;
@@ -14,6 +14,7 @@ import {
   initializeActivityTracking,
   handleStorageChanged,
   handleCommand,
+  loadTabActivityMap,
 } from './index';
 import { getDomain, domainMatches } from '../shared/domain';
 
@@ -2146,6 +2147,190 @@ describe('chrome.commands.onCommand listener', () => {
     // Should not throw — errors are caught
     await vi.waitFor(() => {
       expect(chromeMock.tabs.query).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('tabActivityMap persistence', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetTabActivityMap();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('loadTabActivityMap', () => {
+    it('should return empty map when nothing stored', async () => {
+      chromeMock.storage.local.get.mockResolvedValue({});
+      const loaded = await loadTabActivityMap();
+      expect(loaded.size).toBe(0);
+    });
+
+    it('should restore stored activity map', async () => {
+      chromeMock.storage.local.get.mockResolvedValue({
+        tabActivityMap: { '1': 1000, '2': 2000 },
+      });
+      const loaded = await loadTabActivityMap();
+      expect(loaded.size).toBe(2);
+      expect(loaded.get(1)).toBe(1000);
+      expect(loaded.get(2)).toBe(2000);
+    });
+
+    it('should handle invalid data gracefully', async () => {
+      chromeMock.storage.local.get.mockResolvedValue({
+        tabActivityMap: 'invalid',
+      });
+      const loaded = await loadTabActivityMap();
+      expect(loaded.size).toBe(0);
+    });
+
+    it('should filter out NaN keys', async () => {
+      chromeMock.storage.local.get.mockResolvedValue({
+        tabActivityMap: { abc: 1000, '1': 2000 },
+      });
+      const loaded = await loadTabActivityMap();
+      expect(loaded.size).toBe(1);
+      expect(loaded.get(1)).toBe(2000);
+    });
+
+    it('should handle Chrome API errors', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      chromeMock.storage.local.get.mockRejectedValue(new Error('Storage error'));
+      const loaded = await loadTabActivityMap();
+      expect(loaded.size).toBe(0);
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('schedulePersistTabActivityMap', () => {
+    it('should persist after debounce delay', async () => {
+      updateTabActivity(1);
+      updateTabActivity(2);
+
+      await vi.advanceTimersByTimeAsync(500);
+
+      expect(chromeMock.storage.local.set).toHaveBeenCalledWith({
+        tabActivityMap: { '1': expect.any(Number), '2': expect.any(Number) },
+      });
+    });
+
+    it('should debounce multiple rapid calls', async () => {
+      updateTabActivity(1);
+      await vi.advanceTimersByTimeAsync(100);
+      updateTabActivity(2);
+      await vi.advanceTimersByTimeAsync(100);
+      updateTabActivity(3);
+
+      await vi.advanceTimersByTimeAsync(500);
+
+      expect(chromeMock.storage.local.set).toHaveBeenCalledTimes(1);
+    });
+
+    it('should persist after removeTabActivity', async () => {
+      updateTabActivity(1);
+      await vi.advanceTimersByTimeAsync(500);
+
+      removeTabActivity(1);
+      await vi.advanceTimersByTimeAsync(500);
+
+      expect(chromeMock.storage.local.set).toHaveBeenLastCalledWith({
+        tabActivityMap: {},
+      });
+    });
+
+    it('should handle storage errors gracefully', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      chromeMock.storage.local.set.mockRejectedValue(new Error('Storage error'));
+
+      updateTabActivity(1);
+      await vi.advanceTimersByTimeAsync(500);
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('initializeActivityTracking with persistence', () => {
+    it('should restore from storage and seed missing tabs', async () => {
+      chromeMock.storage.local.get.mockResolvedValue({
+        tabActivityMap: { '1': 1000, '999': 2000 },
+      });
+      chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: 'https://a.com', lastAccessed: 5000 },
+        { id: 2, url: 'https://b.com', lastAccessed: 6000 },
+      ]);
+
+      await initializeActivityTracking();
+
+      expect(
+        getLastActivity({
+          id: 1,
+          url: '',
+          title: '',
+          index: 0,
+          pinned: false,
+          highlighted: false,
+          active: false,
+          windowId: 1,
+          incognito: false,
+          selected: false,
+          discarded: false,
+          autoDiscardable: true,
+          groupId: -1,
+        } as chrome.tabs.Tab),
+      ).toBe(1000);
+
+      expect(
+        getLastActivity({
+          id: 2,
+          url: '',
+          title: '',
+          index: 0,
+          pinned: false,
+          highlighted: false,
+          active: false,
+          windowId: 1,
+          incognito: false,
+          selected: false,
+          discarded: false,
+          autoDiscardable: true,
+          groupId: -1,
+        } as chrome.tabs.Tab),
+      ).toBe(6000);
+    });
+
+    it('should remove stale entries for closed tabs', async () => {
+      updateTabActivity(1);
+      updateTabActivity(999);
+      await vi.advanceTimersByTimeAsync(500);
+
+      chromeMock.storage.local.get.mockResolvedValue({});
+      chromeMock.tabs.query.mockResolvedValue([
+        { id: 1, url: 'https://a.com', lastAccessed: 5000 },
+      ]);
+
+      resetTabActivityMap();
+      await initializeActivityTracking();
+
+      expect(
+        getLastActivity({
+          id: 999,
+          url: '',
+          title: '',
+          index: 0,
+          pinned: false,
+          highlighted: false,
+          active: false,
+          windowId: 1,
+          incognito: false,
+          selected: false,
+          discarded: false,
+          autoDiscardable: true,
+          groupId: -1,
+        } as chrome.tabs.Tab),
+      ).toBe(0);
     });
   });
 });

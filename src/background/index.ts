@@ -4,6 +4,58 @@ import { computeCleanup } from './cleanup';
 // Store last activity timestamps for each tab (tabId -> timestamp)
 const tabActivityMap: Map<number, number> = new Map();
 
+// Debounce timer for persisting tabActivityMap
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Storage key for tab activity map
+const TAB_ACTIVITY_KEY = 'tabActivityMap';
+
+/**
+ * Persists the tabActivityMap to chrome.storage.local.
+ * Uses debouncing to avoid excessive writes.
+ */
+export function schedulePersistTabActivityMap(): void {
+  if (persistTimer !== null) {
+    clearTimeout(persistTimer);
+  }
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    const obj: Record<string, number> = {};
+    tabActivityMap.forEach((value, key) => {
+      obj[key.toString()] = value;
+    });
+    chrome.storage.local.set({ [TAB_ACTIVITY_KEY]: obj }).catch((err) => {
+      console.error('Error persisting tabActivityMap:', err);
+    });
+  }, 500);
+}
+
+/**
+ * Loads the tabActivityMap from chrome.storage.local.
+ * Returns a Map of tabId -> timestamp, or an empty Map if nothing stored.
+ */
+export async function loadTabActivityMap(): Promise<Map<number, number>> {
+  try {
+    const stored = (await chrome.storage.local.get(TAB_ACTIVITY_KEY)) as {
+      [TAB_ACTIVITY_KEY]?: Record<string, number>;
+    };
+    const raw = stored[TAB_ACTIVITY_KEY];
+    if (raw && typeof raw === 'object') {
+      const restored = new Map<number, number>();
+      for (const [key, value] of Object.entries(raw)) {
+        const numKey = Number(key);
+        if (!isNaN(numKey) && typeof value === 'number') {
+          restored.set(numKey, value);
+        }
+      }
+      return restored;
+    }
+  } catch (err) {
+    console.error('Error loading tabActivityMap:', err);
+  }
+  return new Map();
+}
+
 /**
  * Clears all tab activity records.
  * Used for testing purposes to reset state between tests.
@@ -19,6 +71,7 @@ export function resetTabActivityMap(): void {
  */
 export function updateTabActivity(tabId: number): void {
   tabActivityMap.set(tabId, Date.now());
+  schedulePersistTabActivityMap();
 }
 
 /**
@@ -40,6 +93,7 @@ export function getLastActivity(tab: chrome.tabs.Tab): number {
  */
 export function removeTabActivity(tabId: number): void {
   tabActivityMap.delete(tabId);
+  schedulePersistTabActivityMap();
 }
 
 // Set warning icon (yellow when warning is active)
@@ -68,14 +122,32 @@ export async function setWarningIcon(enable: boolean): Promise<void> {
 // Initialize activity tracking for all existing tabs on startup
 export async function initializeActivityTracking(): Promise<void> {
   try {
+    const restored = await loadTabActivityMap();
+    tabActivityMap.clear();
+    restored.forEach((value, key) => tabActivityMap.set(key, value));
+
     const tabs = await chrome.tabs.query({});
     const now = Date.now();
+    const currentTabIds = new Set<number>();
     tabs.forEach((tab) => {
       if (tab.id) {
-        // Use existing lastAccessed or current time
-        tabActivityMap.set(tab.id, tab.lastAccessed || now);
+        currentTabIds.add(tab.id);
+        if (!tabActivityMap.has(tab.id)) {
+          tabActivityMap.set(tab.id, tab.lastAccessed || now);
+        }
       }
     });
+
+    let staleRemoved = 0;
+    tabActivityMap.forEach((_, key) => {
+      if (!currentTabIds.has(key)) {
+        tabActivityMap.delete(key);
+        staleRemoved++;
+      }
+    });
+    if (staleRemoved > 0) {
+      schedulePersistTabActivityMap();
+    }
   } catch (error) {
     console.error('Error initializing activity tracking:', error);
   }
