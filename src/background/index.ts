@@ -1,5 +1,4 @@
 import { getSettings, saveSettings } from '../shared/settings';
-import { getDomain, domainMatches } from '../shared/domain';
 import { computeCleanup } from './cleanup';
 
 // Store last activity timestamps for each tab (tabId -> timestamp)
