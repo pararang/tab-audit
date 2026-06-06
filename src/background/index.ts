@@ -156,6 +156,18 @@ export async function applyCleanupRules() {
       await chrome.tabs.remove(result.tabIdsToClose);
       console.log('Closed tabs:', result.tabIdsToClose);
 
+      // Track the number of tabs cleaned today (resets each day)
+      const today = new Date().toISOString().split('T')[0];
+      const stored = (await chrome.storage.local.get(['tabsCleanedToday', 'tabsCleanedDate'])) as {
+        tabsCleanedToday?: number;
+        tabsCleanedDate?: string;
+      };
+      const prevCount = stored.tabsCleanedDate === today ? (stored.tabsCleanedToday ?? 0) : 0;
+      await chrome.storage.local.set({
+        tabsCleanedToday: prevCount + result.tabIdsToClose.length,
+        tabsCleanedDate: today,
+      });
+
       if (notificationsEnabled) {
         chrome.notifications.create(
           {
