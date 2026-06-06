@@ -66,8 +66,6 @@ const mockMatchMedia = vi.fn((query) => ({
   matches: false,
   media: query,
   onchange: null,
-  addListener: vi.fn(),
-  removeListener: vi.fn(),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
@@ -96,8 +94,6 @@ describe('applyTheme', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -111,8 +107,6 @@ describe('applyTheme', () => {
       matches: true,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -517,6 +511,46 @@ describe('saveSettingsFromForm', () => {
     expect(result.idleTimeout).toBe(DEFAULT_SETTINGS.idleTimeout);
   });
 
+  it('should fall back to default when idleTimeout is NaN', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: 'abc' } as HTMLInputElement,
+      maxTabs: { value: '50' } as HTMLInputElement,
+      theme: { value: 'system' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.idleTimeout).toBe(DEFAULT_SETTINGS.idleTimeout);
+  });
+
+  it('should fall back to default when maxTabs is NaN', async () => {
+    const mockElements: OptionsFormElements = {
+      form: {} as HTMLFormElement,
+      idleTimeout: { value: '30' } as HTMLInputElement,
+      maxTabs: { value: 'abc' } as HTMLInputElement,
+      theme: { value: 'system' } as HTMLSelectElement,
+      whitelist: { value: '' } as HTMLTextAreaElement,
+      blacklist: { value: '' } as HTMLTextAreaElement,
+      whitelistedTabGroups: { value: '' } as HTMLTextAreaElement,
+      notificationsEnabled: { checked: true } as HTMLInputElement,
+      backupBtn: {} as HTMLButtonElement,
+      restoreBtn: {} as HTMLButtonElement,
+      restoreFile: {} as HTMLInputElement,
+    };
+
+    const result = await saveSettingsFromForm(mockElements);
+
+    expect(result.maxTabs).toBe(DEFAULT_SETTINGS.maxTabs);
+  });
+
   it('should preserve enabled=true when saving from options', async () => {
     const mockElements: OptionsFormElements = {
       form: {} as HTMLFormElement,
@@ -608,8 +642,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -670,8 +702,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -742,8 +772,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -810,8 +838,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -885,8 +911,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -961,8 +985,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1037,8 +1059,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1138,8 +1158,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1223,8 +1241,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1310,8 +1326,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: mockAddEventListener,
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1370,8 +1384,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1452,8 +1464,6 @@ describe('bindEventListeners', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1545,8 +1555,6 @@ describe('initOptions', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -1600,8 +1608,6 @@ describe('initOptions', () => {
       matches: false,
       media: '',
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
