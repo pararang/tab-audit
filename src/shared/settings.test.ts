@@ -46,7 +46,6 @@ describe('getSettings', () => {
       blacklist: ['bad.com'],
       whitelistedTabGroups: ['Work'],
       notificationsEnabled: false,
-      warningShown: true,
       theme: 'dark',
     });
 
@@ -60,7 +59,6 @@ describe('getSettings', () => {
       blacklist: ['bad.com'],
       whitelistedTabGroups: ['Work'],
       notificationsEnabled: false,
-      warningShown: true,
       theme: 'dark',
     });
   });
@@ -230,13 +228,13 @@ describe('saveSettings', () => {
 
     await saveSettings({
       notificationsEnabled: true,
-      warningShown: false,
+      enabled: false,
     });
 
     // @ts-expect-error - chrome is mocked
     expect(chrome.storage.sync.set).toHaveBeenCalledWith({
       notificationsEnabled: true,
-      warningShown: false,
+      enabled: false,
     });
   });
 });

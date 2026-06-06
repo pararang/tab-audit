@@ -141,7 +141,6 @@ export async function saveSettingsFromForm(elements: OptionsFormElements): Promi
       .map((d) => d.trim())
       .filter((d) => d),
     notificationsEnabled: elements.notificationsEnabled.checked,
-    warningShown: false,
   };
   await saveSettings(newSettings);
   applyTheme(newSettings.theme);
