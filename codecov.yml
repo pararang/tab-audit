@@ -1,0 +1,29 @@
+# Codecov configuration
+# https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 5%
+    patch:
+      default:
+        target: auto
+        threshold: 80%
+
+ignore:
+  - "dist/"
+  - "coverage/"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "src/**/__mocks__/**"
+
+comment:
+  layout: "diff, flags, files"
+  behavior: default
+  require_changes: false
