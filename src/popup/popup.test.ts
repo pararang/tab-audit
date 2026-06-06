@@ -532,14 +532,8 @@ describe('handleToggle', () => {
 
     await handleToggle(mockElements);
 
-    expect(consoleError).toHaveBeenCalledWith(
-      'Error getting settings:',
-      expect.any(Error),
-    );
-    expect(consoleError).toHaveBeenCalledWith(
-      'Error toggling auto-clean:',
-      expect.any(Error),
-    );
+    expect(consoleError).toHaveBeenCalledWith('Error getting settings:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error toggling auto-clean:', expect.any(Error));
     expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
@@ -560,14 +554,8 @@ describe('handleToggle', () => {
 
     await handleToggle(mockElements);
 
-    expect(consoleError).toHaveBeenCalledWith(
-      'Error saving settings:',
-      expect.any(Error),
-    );
-    expect(consoleError).toHaveBeenCalledWith(
-      'Error toggling auto-clean:',
-      expect.any(Error),
-    );
+    expect(consoleError).toHaveBeenCalledWith('Error saving settings:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error toggling auto-clean:', expect.any(Error));
     expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
@@ -642,14 +630,8 @@ describe('initPopup', () => {
 
     await initPopup();
 
-    expect(consoleError).toHaveBeenCalledWith(
-      'Error getting settings:',
-      expect.any(Error),
-    );
-    expect(consoleError).toHaveBeenCalledWith(
-      'Error loading settings:',
-      expect.any(Error),
-    );
+    expect(consoleError).toHaveBeenCalledWith('Error getting settings:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error loading settings:', expect.any(Error));
     expect(mockToggleButton.textContent).toBe('Enable Auto Clean');
     expect(mockToggleButton.className).toBe('disabled');
     consoleError.mockRestore();

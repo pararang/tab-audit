@@ -1114,9 +1114,7 @@ describe('bindEventListeners', () => {
       // Get the form submit handler
       const submitCall = (
         mockForm.addEventListener as unknown as ReturnType<typeof vi.fn>
-      ).mock.calls.find(
-        (call: unknown) => (call as unknown[])[0] === 'submit',
-      );
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'submit');
       if (submitCall) {
         const submitHandler = submitCall[1];
         const mockEvent = { preventDefault: vi.fn() };
@@ -1196,9 +1194,7 @@ describe('bindEventListeners', () => {
       // Get the file change handler from mockRestoreFile
       const changeCall = (
         mockRestoreFile.addEventListener as unknown as ReturnType<typeof vi.fn>
-      ).mock.calls.find(
-        (call: unknown) => (call as unknown[])[0] === 'change',
-      );
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -1218,10 +1214,7 @@ describe('bindEventListeners', () => {
     expect(global.alert).toHaveBeenCalledWith(
       'Error importing settings. Make sure the file is valid JSON.',
     );
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Error importing settings:',
-      expect.any(Error),
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error importing settings:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
   });
@@ -1348,15 +1341,10 @@ describe('initOptions', () => {
     await initOptions();
 
     // Should show alert about using defaults
-    expect(global.alert).toHaveBeenCalledWith(
-      'Failed to load settings. Using defaults.',
-    );
+    expect(global.alert).toHaveBeenCalledWith('Failed to load settings. Using defaults.');
     // Should populate form with default values
     expect(mockSelect.value).toBe(DEFAULT_SETTINGS.theme);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Error loading settings:',
-      expect.any(Error),
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading settings:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
   });

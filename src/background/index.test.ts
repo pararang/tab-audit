@@ -1284,6 +1284,33 @@ describe('handleCommand', () => {
 
     // Should not throw
   });
+
+  it('should handle getSettings error on toggle-clean command', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage read error'));
+
+    await handleCommand('toggle-clean');
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'Error toggling auto-clean via shortcut:',
+      expect.any(Error),
+    );
+    consoleError.mockRestore();
+  });
+
+  it('should handle saveSettings error on toggle-clean command', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage write error'));
+
+    await handleCommand('toggle-clean');
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'Error toggling auto-clean via shortcut:',
+      expect.any(Error),
+    );
+    consoleError.mockRestore();
+  });
 });
 
 describe('getDomain edge cases', () => {
