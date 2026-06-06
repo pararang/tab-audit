@@ -109,14 +109,11 @@ export async function setWarningIcon(enable: boolean): Promise<void> {
         48: chrome.runtime.getURL('icons/icon48.png'),
         128: chrome.runtime.getURL('icons/icon128.png'),
       };
-  await new Promise<void>((resolve) => {
-    chrome.action.setIcon({ path: iconPath }, () => {
-      if (chrome.runtime.lastError) {
-        console.warn('setIcon error:', chrome.runtime.lastError.message);
-      }
-      resolve();
-    });
-  });
+  try {
+    await chrome.action.setIcon({ path: iconPath });
+  } catch (err) {
+    console.warn('setIcon error:', err);
+  }
 }
 
 // Initialize activity tracking for all existing tabs on startup
@@ -207,19 +204,16 @@ export async function applyCleanupRules() {
         warningActive = true;
         await setWarningIcon(true);
         if (notificationsEnabled) {
-          chrome.notifications.create(
-            {
+          try {
+            await chrome.notifications.create({
               type: 'basic',
               iconUrl: chrome.runtime.getURL('icons/icon128.png'),
               title: 'Tab Warning',
               message: `You have ${result.tabCount} tabs open (limit: ${maxTabs}). Consider closing some tabs.`,
-            },
-            () => {
-              if (chrome.runtime.lastError) {
-                console.warn('Notification error:', chrome.runtime.lastError.message);
-              }
-            },
-          );
+            });
+          } catch (err) {
+            console.warn('Notification error:', err);
+          }
         }
       }
     } else if (warningActive) {
@@ -245,19 +239,16 @@ export async function applyCleanupRules() {
       });
 
       if (notificationsEnabled) {
-        chrome.notifications.create(
-          {
+        try {
+          await chrome.notifications.create({
             type: 'basic',
             iconUrl: chrome.runtime.getURL('icons/icon128.png'),
             title: 'Tabs Cleaned',
             message: `Automatically closed ${result.tabIdsToClose.length} inactive tab(s).`,
-          },
-          () => {
-            if (chrome.runtime.lastError) {
-              console.warn('Notification error:', chrome.runtime.lastError.message);
-            }
-          },
-        );
+          });
+        } catch (err) {
+          console.warn('Notification error:', err);
+        }
       }
     }
   } catch (error) {

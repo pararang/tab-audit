@@ -952,51 +952,39 @@ describe('setWarningIcon', () => {
   it('should set yellow warning icon when enabled', async () => {
     const getURLSpy = chromeMock.runtime.getURL;
     getURLSpy.mockImplementation((path: any): string => `chrome-extension://mock/${path}`);
-    chromeMock.action.setIcon.mockImplementation((_: any, callback: any) => {
-      if (callback) callback();
-      return Promise.resolve();
-    });
+    chromeMock.action.setIcon.mockResolvedValue(undefined);
 
     await setWarningIcon(true);
 
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon16-yellow.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon48-yellow.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon128-yellow.png');
-    expect(chromeMock.action.setIcon).toHaveBeenCalledWith(
-      {
-        path: {
-          16: 'chrome-extension://mock/icons/icon16-yellow.png',
-          48: 'chrome-extension://mock/icons/icon48-yellow.png',
-          128: 'chrome-extension://mock/icons/icon128-yellow.png',
-        },
+    expect(chromeMock.action.setIcon).toHaveBeenCalledWith({
+      path: {
+        16: 'chrome-extension://mock/icons/icon16-yellow.png',
+        48: 'chrome-extension://mock/icons/icon48-yellow.png',
+        128: 'chrome-extension://mock/icons/icon128-yellow.png',
       },
-      expect.any(Function),
-    );
+    });
   });
 
   it('should set normal icon when disabled', async () => {
     const getURLSpy = chromeMock.runtime.getURL;
     getURLSpy.mockImplementation((path: any): string => `chrome-extension://mock/${path}`);
-    chromeMock.action.setIcon.mockImplementation((_: any, callback: any) => {
-      if (callback) callback();
-      return Promise.resolve();
-    });
+    chromeMock.action.setIcon.mockResolvedValue(undefined);
 
     await setWarningIcon(false);
 
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon16.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon48.png');
     expect(getURLSpy).toHaveBeenCalledWith('icons/icon128.png');
-    expect(chromeMock.action.setIcon).toHaveBeenCalledWith(
-      {
-        path: {
-          16: 'chrome-extension://mock/icons/icon16.png',
-          48: 'chrome-extension://mock/icons/icon48.png',
-          128: 'chrome-extension://mock/icons/icon128.png',
-        },
+    expect(chromeMock.action.setIcon).toHaveBeenCalledWith({
+      path: {
+        16: 'chrome-extension://mock/icons/icon16.png',
+        48: 'chrome-extension://mock/icons/icon48.png',
+        128: 'chrome-extension://mock/icons/icon128.png',
       },
-      expect.any(Function),
-    );
+    });
   });
 
   it('should handle Chrome API errors gracefully', async () => {
@@ -1005,16 +993,7 @@ describe('setWarningIcon', () => {
 
     const getURLSpy = chromeMock.runtime.getURL;
     getURLSpy.mockImplementation((path: any): string => `chrome-extension://mock/${path}`);
-    chromeMock.action.setIcon.mockImplementation((_: any, callback: any) => {
-      if (callback) {
-        callback();
-        Object.defineProperty(chrome.runtime, 'lastError', {
-          value: { message: 'Icon error' },
-          writable: true,
-        });
-      }
-      return Promise.resolve();
-    });
+    chromeMock.action.setIcon.mockRejectedValue(new Error('Icon error'));
 
     await setWarningIcon(true);
 
