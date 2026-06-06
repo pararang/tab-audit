@@ -268,6 +268,11 @@ export function handleStorageChanged(
     if (changes.maxTabs) {
       applyCleanupRules().catch((err) => console.error('Storage change cleanup error:', err));
     }
+  } else if (namespace === 'local') {
+    // Domain lists changed in local storage - re-apply cleanup rules
+    if (changes.whitelist || changes.blacklist || changes.whitelistedTabGroups) {
+      applyCleanupRules().catch((err) => console.error('Local storage change cleanup error:', err));
+    }
   }
 }
 

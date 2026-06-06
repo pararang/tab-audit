@@ -232,7 +232,8 @@ export function bindEventListeners(elements: OptionsFormElements): void {
       alert('Settings restored successfully!');
     } catch (error) {
       console.error('Error importing settings:', error);
-      alert('Error importing settings. Make sure the file is valid JSON.');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to import settings: ${message}`);
     }
 
     // Reset file input
@@ -246,7 +247,8 @@ export function bindEventListeners(elements: OptionsFormElements): void {
       alert('Settings saved');
     } catch (error) {
       console.error('Error saving settings in options:', error);
-      alert('Error saving settings');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to save settings: ${message}`);
     }
   });
 }
