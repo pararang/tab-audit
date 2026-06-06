@@ -17,4 +17,20 @@ describe('formatTime', () => {
   it('should format 2 hours 15 minutes', () => {
     expect(formatTime(135)).toBe('2h 15m');
   });
+
+  it('should handle zero minutes', () => {
+    expect(formatTime(0)).toBe('0m');
+  });
+
+  it('should handle negative minutes gracefully', () => {
+    expect(formatTime(-1)).toBe('0m');
+  });
+
+  it('should handle NaN input', () => {
+    expect(formatTime(NaN)).toBe('0m');
+  });
+
+  it('should handle Infinity input', () => {
+    expect(formatTime(Infinity)).toBe('0m');
+  });
 });

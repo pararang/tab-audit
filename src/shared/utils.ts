@@ -7,6 +7,7 @@
  * @example formatTime(60) // "1h 0m"
  */
 export function formatTime(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes < 0) return '0m';
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
