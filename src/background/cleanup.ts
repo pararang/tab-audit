@@ -4,10 +4,15 @@ import { getDomain, domainMatches } from '../shared/domain';
 /**
  * Identifies duplicate tabs with the same URL.
  * Keeps the most recently accessed tab (or active tab) and marks others as duplicates.
+ * Uses getLastActivity callback for custom activity timestamps when available.
  * @param tabs - Array of Chrome tabs to check
+ * @param getLastActivity - Callback to get last activity timestamp for a tab
  * @returns Array of tab IDs to close (duplicates)
  */
-export function getDuplicateTabs(tabs: chrome.tabs.Tab[]): number[] {
+export function getDuplicateTabs(
+  tabs: chrome.tabs.Tab[],
+  getLastActivity: (tab: chrome.tabs.Tab) => number,
+): number[] {
   const duplicates: number[] = [];
   const urlMap: Map<string, chrome.tabs.Tab[]> = new Map();
 
@@ -24,7 +29,7 @@ export function getDuplicateTabs(tabs: chrome.tabs.Tab[]): number[] {
       tabsWithSameUrl.sort((a, b) => {
         if (a.active && !b.active) return -1;
         if (!a.active && b.active) return 1;
-        return (b.lastAccessed || 0) - (a.lastAccessed || 0);
+        return getLastActivity(b) - getLastActivity(a);
       });
       tabsWithSameUrl.slice(1).forEach((tab) => {
         if (tab.id && !tab.active && !tab.pinned) duplicates.push(tab.id);
@@ -107,7 +112,7 @@ export function computeCleanup(input: CleanupInput): CleanupResult {
   });
 
   // 5. Duplicate tabs
-  const duplicateIds = getDuplicateTabs(tabs);
+  const duplicateIds = getDuplicateTabs(tabs, getLastActivity);
   duplicateIds.forEach((id) => {
     const tab = tabs.find((t) => t.id === id);
     if (tab && !tab.active && !tab.pinned) {
