@@ -919,10 +919,13 @@ describe('applyCleanupRules', () => {
   });
 
   it('should handle warning notification creation error gracefully', async () => {
+    handleStorageChanged({ enabled: { newValue: true, oldValue: true } }, 'sync');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     chromeMock.storage.sync.get.mockResolvedValue({
       enabled: true,
       idleTimeout: 60,
-      maxTabs: 1,
+      maxTabs: 5,
       whitelist: [],
       blacklist: [],
       notificationsEnabled: true,
@@ -930,6 +933,8 @@ describe('applyCleanupRules', () => {
     chromeMock.tabs.query.mockResolvedValue([
       createTab({ id: 1, url: 'https://a.com', active: true, lastAccessed: 100 }),
       createTab({ id: 2, url: 'https://b.com', lastAccessed: 200 }),
+      createTab({ id: 3, url: 'https://c.com', lastAccessed: 300 }),
+      createTab({ id: 4, url: 'https://d.com', lastAccessed: 400 }),
     ]);
     chromeMock.notifications.create.mockRejectedValue(new Error('Warning notification error'));
 
