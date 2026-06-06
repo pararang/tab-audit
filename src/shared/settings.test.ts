@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { MockChrome } from '../__test-utils__/chrome-mock';
 import './__mocks__/chrome';
-const chromeMock = vi.mocked(chrome);
+const chromeMock = chrome as unknown as MockChrome;
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from './settings';
 
 describe('getSettings', () => {

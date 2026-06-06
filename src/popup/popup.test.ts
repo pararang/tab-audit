@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { MockChrome } from '../__test-utils__/chrome-mock';
 import './__mocks__/chrome';
-const chromeMock = vi.mocked(chrome);
+const chromeMock = chrome as unknown as MockChrome;
 import { applyTheme } from '../shared/theme';
 import { getDomain } from '../shared/domain';
 import {
@@ -75,14 +77,14 @@ vi.stubGlobal('document', {
   })),
 });
 
-// Mock chrome.runtime.openOptionsPage
-chrome.runtime = {
-  ...chrome.runtime,
+// Mock chromeMock.runtime.openOptionsPage
+chromeMock.runtime = {
+  ...chromeMock.runtime,
   openOptionsPage: vi.fn(),
 };
 
-// Mock chrome.runtime.sendMessage
-chrome.runtime.sendMessage = vi.fn();
+// Mock chromeMock.runtime.sendMessage
+chromeMock.runtime.sendMessage = vi.fn();
 
 describe('applyTheme', () => {
   beforeEach(() => {
@@ -100,13 +102,13 @@ describe('applyTheme', () => {
   });
 
   it('should resolve system preference to light', () => {
-    mockMatchMedia.mockReturnValue({ matches: false });
+    mockMatchMedia.mockReturnValue({ matches: false, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
     applyTheme('system');
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
   it('should resolve system preference to dark', () => {
-    mockMatchMedia.mockReturnValue({ matches: true });
+    mockMatchMedia.mockReturnValue({ matches: true, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
     applyTheme('system');
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -305,8 +307,10 @@ describe('updateTabCount', () => {
       topDomain: {} as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
-    chromeMock.tabs.query.mockImplementation((query, callback) => {
+    chromeMock.tabs.query.mockImplementation((query: any, callback: any) => {
       callback([{ id: 1 }, { id: 2 }, { id: 3 }]);
     });
 
@@ -322,8 +326,10 @@ describe('updateTabCount', () => {
       topDomain: {} as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
-    chromeMock.tabs.query.mockImplementation((query, callback) => {
+    chromeMock.tabs.query.mockImplementation((query: any, callback: any) => {
       callback([]);
     });
 
@@ -345,6 +351,8 @@ describe('updateStats', () => {
       topDomain: { textContent: '' } as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
     chromeMock.tabs.query.mockResolvedValue([
       { url: 'https://example.com/page1' },
@@ -365,6 +373,8 @@ describe('updateStats', () => {
       topDomain: { textContent: '' } as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
     chromeMock.tabs.query.mockResolvedValue([]);
     chromeMock.storage.local.get.mockResolvedValue({ tabsCleanedToday: 0 });
@@ -382,6 +392,8 @@ describe('updateStats', () => {
       topDomain: { textContent: 'initial' } as HTMLElement,
       toggleButton: {} as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
     chromeMock.tabs.query.mockRejectedValue(new Error('API error'));
 
@@ -400,6 +412,8 @@ describe('updateButton', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
     updateButton(mockElements, true);
@@ -415,6 +429,8 @@ describe('updateButton', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
 
     updateButton(mockElements, false);
@@ -436,6 +452,8 @@ describe('handleToggle', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
     chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
     chromeMock.storage.sync.set.mockResolvedValue(undefined);
@@ -455,6 +473,8 @@ describe('handleToggle', () => {
       topDomain: {} as HTMLElement,
       toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
       settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
     };
     chromeMock.storage.sync.get.mockResolvedValue({ enabled: true });
     chromeMock.storage.sync.set.mockResolvedValue(undefined);
@@ -497,7 +517,7 @@ describe('initPopup', () => {
         'cleaned-count': mockCleanedCount,
         'top-domain': mockTopDomain,
         'toggle-clean': mockToggleButton,
-        'open-settings': null,
+        'open-settings': null as unknown as HTMLElement,
       };
       return elements[id] || null;
     });

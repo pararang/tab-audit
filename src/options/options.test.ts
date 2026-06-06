@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { MockChrome } from '../__test-utils__/chrome-mock';
 
 // Mock Chrome APIs and DOM before importing the module
 import './__mocks__/chrome';
-const chromeMock = vi.mocked(chrome);
+const chromeMock = chrome as unknown as MockChrome;
 import { applyTheme } from '../shared/theme';
 import {
   isValidSettings,
@@ -17,7 +19,7 @@ import { DEFAULT_SETTINGS } from '../shared/settings';
 
 // Get the mockDocumentElement from the global scope
 const mockDocumentElement = (
-  global as { document?: { documentElement?: { setAttribute: vi.Mock } } }
+  (global as unknown) as { document?: { documentElement?: { setAttribute: ReturnType<typeof vi.fn> } } }
 ).document?.documentElement;
 
 // Mock document.getElementById to return null initially
@@ -91,13 +93,13 @@ describe('applyTheme', () => {
   });
 
   it('should resolve system preference to light', () => {
-    mockMatchMedia.mockReturnValue({ matches: false });
+    mockMatchMedia.mockReturnValue({ matches: false, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
     applyTheme('system');
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
   it('should resolve system preference to dark', () => {
-    mockMatchMedia.mockReturnValue({ matches: true });
+    mockMatchMedia.mockReturnValue({ matches: true, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
     applyTheme('system');
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -352,7 +354,7 @@ describe('saveSettingsFromForm', () => {
     const mockElements: OptionsFormElements = {
       form: {} as HTMLFormElement,
       idleTimeout: { value: '60' } as HTMLInputElement,
-      maxTabs: { value: '75' } as HTMLSelectElement,
+      maxTabs: { value: '75' } as HTMLInputElement,
       theme: { value: 'light' } as HTMLSelectElement,
       whitelist: { value: 'a.com\nb.com' } as HTMLTextAreaElement,
       blacklist: { value: 'c.com' } as HTMLTextAreaElement,
@@ -587,7 +589,13 @@ describe('bindEventListeners', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
 
     const elements = getFormElements();
@@ -598,7 +606,7 @@ describe('bindEventListeners', () => {
     expect(mockForm.addEventListener).toHaveBeenCalledWith('submit', expect.any(Function));
     expect(mockButton.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
     expect(mockInput.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
-    expect(window.matchMedia).toHaveBeenCalled();
+    expect(mockMatchMedia).toHaveBeenCalled();
   });
 
   it('should handle backup button click with error', async () => {
@@ -643,7 +651,13 @@ describe('bindEventListeners', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
     chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage error'));
 
@@ -651,7 +665,7 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the backup click handler
-      const backupCall = mockButton.addEventListener.mock.calls.find((call) => call[0] === 'click');
+      const backupCall = (mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'click');
       if (backupCall) {
         const backupHandler = backupCall[1];
         await backupHandler();
@@ -707,15 +721,21 @@ describe('bindEventListeners', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
 
     const elements = getFormElements();
     if (elements) {
       bindEventListeners(elements);
       // Get the restore button click handler (second button with click listener)
-      const clickCalls = mockButton.addEventListener.mock.calls.filter(
-        (call) => call[0] === 'click',
+      const clickCalls = (mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
+        (call: unknown) => (call as unknown[])[0] === 'click',
       );
       if (clickCalls.length >= 2) {
         const restoreHandler = clickCalls[1][1];
@@ -769,14 +789,20 @@ describe('bindEventListeners', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
 
     const elements = getFormElements();
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = mockInput.addEventListener.mock.calls.find((call) => call[0] === 'change');
+      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -836,14 +862,20 @@ describe('bindEventListeners', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
 
     const elements = getFormElements();
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = mockInput.addEventListener.mock.calls.find((call) => call[0] === 'change');
+      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -904,14 +936,20 @@ describe('bindEventListeners', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
 
     const elements = getFormElements();
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = mockInput.addEventListener.mock.calls.find((call) => call[0] === 'change');
+      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -972,7 +1010,13 @@ describe('bindEventListeners', () => {
     const mockAddEventListener = vi.fn();
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: mockAddEventListener,
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
     chromeMock.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS, theme: 'system' });
 
@@ -1038,7 +1082,13 @@ describe('initOptions', () => {
     });
     mockMatchMedia.mockReturnValue({
       matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     });
     chromeMock.storage.sync.get.mockResolvedValue(DEFAULT_SETTINGS);
 

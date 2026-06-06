@@ -23,7 +23,7 @@ const mockChrome = {
     onMessage: {
       addListener: vi.fn(),
     },
-    getURL: (path: string) => `chrome-extension://mock/${path}`,
+    getURL: vi.fn((path: string) => `chrome-extension://mock/${path}`),
   },
   tabGroups: {
     query: vi.fn(() => Promise.resolve([])),
