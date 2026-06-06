@@ -194,26 +194,28 @@ chrome.alarms.create('cleanup', { periodInMinutes: 1 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'cleanup') {
-    applyCleanupRules();
+    applyCleanupRules().catch((err) => console.error('Alarm cleanup error:', err));
   }
 });
 
 // Run immediate cleanup on startup/install
 chrome.runtime.onInstalled.addListener(() => {
-  applyCleanupRules();
+  applyCleanupRules().catch((err) => console.error('onInstalled cleanup error:', err));
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  applyCleanupRules();
+  applyCleanupRules().catch((err) => console.error('onStartup cleanup error:', err));
 });
 
 // Listen for manual cleanup requests
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'runCleanup') {
-    (async () => {
-      await applyCleanupRules();
-      sendResponse({ status: 'started' });
-    })();
+    applyCleanupRules()
+      .then(() => sendResponse({ status: 'started' }))
+      .catch((err) => {
+        console.error('Message cleanup error:', err);
+        sendResponse({ status: 'error' });
+      });
     return true; // keep channel open for async sendResponse
   }
 });
@@ -238,7 +240,7 @@ chrome.tabs.onCreated.addListener((tab) => {
   if (tab.id) {
     updateTabActivity(tab.id);
   }
-  applyCleanupRules();
+  applyCleanupRules().catch((err) => console.error('onCreated cleanup error:', err));
 });
 
 // Clean up when a tab is closed
@@ -258,7 +260,7 @@ export function handleStorageChanged(
     }
     // Immediately apply cleanup rules when maxTabs changes (bug fix)
     if (changes.maxTabs) {
-      applyCleanupRules();
+      applyCleanupRules().catch((err) => console.error('Storage change cleanup error:', err));
     }
   }
 }
@@ -280,8 +282,8 @@ export async function handleCommand(command: string): Promise<void> {
   }
 }
 
-chrome.commands.onCommand.addListener(async (command) => {
-  await handleCommand(command);
+chrome.commands.onCommand.addListener((command) => {
+  handleCommand(command).catch((err) => console.error('Command error:', err));
 });
 
 // Initialize on startup
