@@ -11,10 +11,14 @@ coverage:
       default:
         target: auto
         threshold: 5%
+        branches:
+          - main
     patch:
       default:
         target: auto
         threshold: 80%
+        branches:
+          - main
 
 ignore:
   - "dist/"
