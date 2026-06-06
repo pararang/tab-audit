@@ -113,7 +113,7 @@ export function getDuplicateTabs(tabs: chrome.tabs.Tab[]): number[] {
       });
       // All except the first one are duplicates (active tab will be first if present)
       tabsWithSameUrl.slice(1).forEach((tab) => {
-        if (tab.id && !tab.active) duplicates.push(tab.id);
+        if (tab.id && !tab.active && !tab.pinned) duplicates.push(tab.id);
       });
     }
   });
@@ -217,7 +217,7 @@ export async function applyCleanupRules() {
     duplicates.forEach((id) => {
       // Re-verify it's not whitelisted or active (though getDuplicateTabs check URL, active tab might be one of them)
       const tab = allTabs.find((t) => t.id === id);
-      if (tab && !tab.active) {
+      if (tab && !tab.active && !tab.pinned) {
         const domain = getDomain(tab.url);
         const isInWhitelistedGroup = tab.groupId ? whitelistedGroupIds.has(tab.groupId) : false;
         if (!isInWhitelistedGroup && !whitelist.some((w) => domainMatches(domain, w))) {

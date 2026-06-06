@@ -128,11 +128,11 @@ export async function loadSettingsToForm(elements: OptionsFormElements): Promise
 export async function saveSettingsFromForm(elements: OptionsFormElements): Promise<Settings> {
   // Validate maxTabs: must be a positive integer, fall back to default if invalid
   const parsedMaxTabs = parseInt(elements.maxTabs.value);
-  const maxTabs = Number.isInteger(parsedMaxTabs) && parsedMaxTabs > 0 ? parsedMaxTabs : DEFAULT_SETTINGS.maxTabs;
+  const maxTabs = Number.isInteger(parsedMaxTabs) && parsedMaxTabs >= 0 ? parsedMaxTabs : DEFAULT_SETTINGS.maxTabs;
 
-  // Validate idleTimeout: must be a positive integer, fall back to default if invalid
+  // Validate idleTimeout: must be a non-negative integer, fall back to default if invalid
   const parsedIdleTimeout = parseInt(elements.idleTimeout.value);
-  const idleTimeout = Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout > 0 ? parsedIdleTimeout : DEFAULT_SETTINGS.idleTimeout;
+  const idleTimeout = Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout >= 0 ? parsedIdleTimeout : DEFAULT_SETTINGS.idleTimeout;
 
   const newSettings: Settings = {
     enabled: true,

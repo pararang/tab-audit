@@ -867,6 +867,9 @@ describe('handleStorageChanged', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetTabActivityMap();
+    // Mock tabs.query to prevent console errors from applyCleanupRules
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([]);
   });
 
   it('should reset warning when maxTabs changes', async () => {
@@ -903,6 +906,26 @@ describe('handleStorageChanged', () => {
     handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'local');
 
     expect(setIconSpy).not.toHaveBeenCalled();
+  });
+
+  it('should trigger applyCleanupRules when maxTabs changes', async () => {
+    handleStorageChanged({ maxTabs: { newValue: 100, oldValue: 50 } }, 'sync');
+
+    // Wait for async applyCleanupRules to complete
+    await vi.waitFor(() => {
+      // @ts-expect-error - chrome is mocked
+      expect(chrome.tabs.query).toHaveBeenCalled();
+    });
+  });
+
+  it('should not trigger applyCleanupRules for non-maxTabs changes', async () => {
+    handleStorageChanged({ whitelist: { newValue: ['a.com'], oldValue: [] } }, 'sync');
+
+    // Small delay to let any async calls settle
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.query).not.toHaveBeenCalled();
   });
 });
 
@@ -1081,6 +1104,30 @@ describe('getDuplicateTabs edge cases', () => {
     ];
     const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
     expect(duplicates).toContain(1);
+  });
+
+  it('should not mark pinned tabs as duplicates', () => {
+    // Pinned newer tab means the older non-pinned tab is the duplicate
+    const tabs = [
+      { id: 1, url: 'https://example.com', active: false, pinned: true, lastAccessed: 200 },
+      { id: 2, url: 'https://example.com', active: false, pinned: false, lastAccessed: 100 },
+    ];
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    expect(duplicates).not.toContain(1);
+    expect(duplicates).toContain(2);
+  });
+
+  it('should not mark pinned tabs as duplicates even if older', () => {
+    // Pinned tab is oldest, non-pinned tabs share the URL - only non-pinned tabs are duplicates
+    const tabs = [
+      { id: 1, url: 'https://example.com', active: false, pinned: true, lastAccessed: 50 },
+      { id: 2, url: 'https://example.com', active: false, pinned: false, lastAccessed: 100 },
+      { id: 3, url: 'https://example.com', active: false, pinned: false, lastAccessed: 150 },
+    ];
+    const duplicates = getDuplicateTabs(tabs as chrome.tabs.Tab[]);
+    expect(duplicates).not.toContain(1);
+    expect(duplicates).not.toContain(3); // newest non-pinned is kept
+    expect(duplicates).toContain(2);
   });
 });
 
@@ -1464,5 +1511,106 @@ describe('applyCleanupRules edge cases', () => {
 
     // Should not throw
     await expect(applyCleanupRules()).resolves.not.toThrow();
+  });
+
+  it('should not close pinned tabs when idle', async () => {
+    const now = Date.now();
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 1,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://example.com', active: false, pinned: true, lastAccessed: now - 120000 },
+      { id: 2, url: 'https://other.com', active: false, pinned: false, lastAccessed: now - 120000 },
+    ]);
+
+    await applyCleanupRules();
+
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.remove).toHaveBeenCalledWith([2]);
+  });
+
+  it('should not close pinned tabs when over maxTabs', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 60,
+      maxTabs: 2,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://a.com', active: true, pinned: false, lastAccessed: 100 },
+      { id: 2, url: 'https://b.com', active: false, pinned: true, lastAccessed: 200 },
+      { id: 3, url: 'https://c.com', active: false, pinned: false, lastAccessed: 150 },
+    ]);
+
+    await applyCleanupRules();
+
+    // Pinned tab (id: 2) should not be closed even though it's over maxTabs
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.remove).toHaveBeenCalledWith([3]);
+  });
+
+  it('should not close pinned tabs that are duplicates', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 60,
+      maxTabs: 50,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://example.com', active: true, pinned: false, lastAccessed: 100 },
+      { id: 2, url: 'https://example.com', active: false, pinned: true, lastAccessed: 200 },
+      { id: 3, url: 'https://example.com', active: false, pinned: false, lastAccessed: 150 },
+    ]);
+
+    await applyCleanupRules();
+
+    // Pinned duplicate (id: 2) should not be closed
+    // @ts-expect-error - chrome is mocked
+    const removedTabs = chrome.tabs.remove.mock.calls[0][0];
+    expect(removedTabs).not.toContain(2);
+    expect(removedTabs).toContain(3);
+  });
+
+  it('should not close tabs when maxTabs is 0 (unlimited)', async () => {
+    // @ts-expect-error - chrome is mocked
+    chrome.storage.sync.get.mockResolvedValue({
+      enabled: true,
+      idleTimeout: 60,
+      maxTabs: 0,
+      whitelist: [],
+      blacklist: [],
+      notificationsEnabled: false,
+    });
+    const now = Date.now();
+    // @ts-expect-error - chrome is mocked
+    chrome.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://a.com', active: true, lastAccessed: now },
+      { id: 2, url: 'https://b.com', active: false, lastAccessed: now - 10000 },
+      { id: 3, url: 'https://c.com', active: false, lastAccessed: now - 20000 },
+      { id: 4, url: 'https://d.com', active: false, lastAccessed: now - 30000 },
+      { id: 5, url: 'https://e.com', active: false, lastAccessed: now - 40000 },
+    ]);
+
+    await applyCleanupRules();
+
+    // No tabs should be closed due to maxTabs (0 = unlimited)
+    // Idle timeout is 60min and all tabs are within that window
+    // @ts-expect-error - chrome is mocked
+    expect(chrome.tabs.remove).not.toHaveBeenCalled();
   });
 });
