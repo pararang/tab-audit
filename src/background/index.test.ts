@@ -18,7 +18,9 @@ import {
 import { getDomain, domainMatches } from '../shared/domain';
 
 // Capture the onMessage listener registered during module import
-const messageListener = chromeMock.runtime.onMessage.addListener.mock.calls[0][0] as (...args: any[]) => any;
+const messageListener = chromeMock.runtime.onMessage.addListener.mock.calls[0][0] as (
+  ...args: any[]
+) => any;
 
 describe('updateTabActivity', () => {
   beforeEach(() => {
@@ -30,18 +32,66 @@ describe('updateTabActivity', () => {
     updateTabActivity(1);
     const after = Date.now();
 
-    const lastActivity = getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const lastActivity = getLastActivity({
+      id: 1,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
     expect(lastActivity).toBeGreaterThanOrEqual(before);
     expect(lastActivity).toBeLessThanOrEqual(after);
   });
 
   it('should update existing tab activity timestamp', () => {
     updateTabActivity(1);
-    const firstTimestamp = getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const firstTimestamp = getLastActivity({
+      id: 1,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
 
     // Call updateTabActivity again - verifies function can be called multiple times
     updateTabActivity(1);
-    const secondTimestamp = getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const secondTimestamp = getLastActivity({
+      id: 1,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
 
     // Both calls should set valid timestamps (may be same in same millisecond)
     expect(firstTimestamp).toBeGreaterThan(0);
@@ -53,8 +103,40 @@ describe('updateTabActivity', () => {
     updateTabActivity(1);
     updateTabActivity(2);
 
-    const timestamp1 = getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
-    const timestamp2 = getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const timestamp1 = getLastActivity({
+      id: 1,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
+    const timestamp2 = getLastActivity({
+      id: 2,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
 
     expect(timestamp1).toBeGreaterThanOrEqual(before);
     expect(timestamp2).toBeGreaterThanOrEqual(before);
@@ -90,10 +172,46 @@ describe('removeTabActivity', () => {
 
   it('should remove tab activity record', () => {
     updateTabActivity(1);
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBeGreaterThan(0);
 
     removeTabActivity(1);
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBe(0);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
   });
 
   it('should handle removing non-existent tab gracefully', () => {
@@ -103,11 +221,43 @@ describe('removeTabActivity', () => {
   it('should not affect other tabs', () => {
     updateTabActivity(1);
     updateTabActivity(2);
-    const timestamp2 = getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const timestamp2 = getLastActivity({
+      id: 2,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
 
     removeTabActivity(1);
 
-    const result2 = getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const result2 = getLastActivity({
+      id: 2,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
     expect(result2).toBe(timestamp2);
   });
 });
@@ -122,15 +272,123 @@ describe('resetTabActivityMap', () => {
     updateTabActivity(2);
     updateTabActivity(3);
 
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBeGreaterThan(0);
-    expect(getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBeGreaterThan(0);
-    expect(getLastActivity({ id: 3, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 2,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 3,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBeGreaterThan(0);
 
     resetTabActivityMap();
 
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBe(0);
-    expect(getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBe(0);
-    expect(getLastActivity({ id: 3, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBe(0);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
+    expect(
+      getLastActivity({
+        id: 2,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
+    expect(
+      getLastActivity({
+        id: 3,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
   });
 
   it('should handle resetting empty map gracefully', () => {
@@ -360,7 +618,13 @@ describe('applyCleanupRules', () => {
     ]);
     chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://work.com', groupId: 10, lastAccessed: now - 120000, active: false },
-      { id: 2, url: 'https://personal.com', groupId: 20, lastAccessed: now - 120000, active: false },
+      {
+        id: 2,
+        url: 'https://personal.com',
+        groupId: 20,
+        lastAccessed: now - 120000,
+        active: false,
+      },
       { id: 3, url: 'https://other.com', groupId: -1, lastAccessed: now - 120000, active: false },
     ]);
 
@@ -390,7 +654,13 @@ describe('applyCleanupRules', () => {
     ]);
     chromeMock.tabs.query.mockResolvedValue([
       { id: 1, url: 'https://work.com', groupId: 10, lastAccessed: now - 5000, active: true },
-      { id: 2, url: 'https://work.com/page2', groupId: 10, lastAccessed: now - 10000, active: false },
+      {
+        id: 2,
+        url: 'https://work.com/page2',
+        groupId: 10,
+        lastAccessed: now - 10000,
+        active: false,
+      },
       { id: 3, url: 'https://other.com', lastAccessed: now - 15000, active: false },
     ]);
 
@@ -699,7 +969,7 @@ describe('setWarningIcon', () => {
           128: 'chrome-extension://mock/icons/icon128-yellow.png',
         },
       },
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -724,7 +994,7 @@ describe('setWarningIcon', () => {
           128: 'chrome-extension://mock/icons/icon128.png',
         },
       },
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -737,7 +1007,10 @@ describe('setWarningIcon', () => {
     chromeMock.action.setIcon.mockImplementation((_: any, callback: any) => {
       if (callback) {
         callback();
-        Object.defineProperty(chrome.runtime, 'lastError', { value: { message: 'Icon error' }, writable: true });
+        Object.defineProperty(chrome.runtime, 'lastError', {
+          value: { message: 'Icon error' },
+          writable: true,
+        });
       }
       return Promise.resolve();
     });
@@ -767,19 +1040,83 @@ describe('initializeActivityTracking', () => {
 
     expect(chromeMock.tabs.query).toHaveBeenCalledWith({});
     // Use getLastActivity to verify the map was populated
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1 } as chrome.tabs.Tab)).toBe(now - 10000);
-    expect(getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1 } as chrome.tabs.Tab)).toBe(now - 20000);
-    expect(getLastActivity({ id: 3, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1 } as chrome.tabs.Tab)).toBe(now - 30000);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+      } as chrome.tabs.Tab),
+    ).toBe(now - 10000);
+    expect(
+      getLastActivity({
+        id: 2,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+      } as chrome.tabs.Tab),
+    ).toBe(now - 20000);
+    expect(
+      getLastActivity({
+        id: 3,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+      } as chrome.tabs.Tab),
+    ).toBe(now - 30000);
   });
 
   it('should use current time for tabs without lastAccessed', async () => {
     const now = Date.now();
-    chromeMock.tabs.query.mockResolvedValue([{ id: 1, url: 'https://a.com', lastAccessed: undefined }]);
+    chromeMock.tabs.query.mockResolvedValue([
+      { id: 1, url: 'https://a.com', lastAccessed: undefined },
+    ]);
 
     await initializeActivityTracking();
 
     // The timestamp should be close to now (within 100ms)
-    const recordedTime = getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1 } as chrome.tabs.Tab);
+    const recordedTime = getLastActivity({
+      id: 1,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+    } as chrome.tabs.Tab);
     expect(recordedTime).toBeGreaterThanOrEqual(now - 100);
     expect(recordedTime).toBeLessThanOrEqual(now + 100);
   });
@@ -792,7 +1129,23 @@ describe('initializeActivityTracking', () => {
     await initializeActivityTracking();
 
     // Map should remain empty
-    expect(getLastActivity({ id: 999, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1 } as chrome.tabs.Tab)).toBe(0);
+    expect(
+      getLastActivity({
+        id: 999,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
   });
 
   it('should handle Chrome API errors gracefully', async () => {
@@ -804,7 +1157,23 @@ describe('initializeActivityTracking', () => {
     await initializeActivityTracking();
 
     // Should not throw, map should remain empty
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1 } as chrome.tabs.Tab)).toBe(0);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
     consoleErrorSpy.mockRestore();
   });
 });
@@ -1072,7 +1441,23 @@ describe('tab creation activity tracking', () => {
   it('should update activity when tab is created with id', () => {
     updateTabActivity(100);
 
-    const activity = getLastActivity({ id: 100, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab);
+    const activity = getLastActivity({
+      id: 100,
+      url: '',
+      title: '',
+      index: 0,
+      pinned: false,
+      highlighted: false,
+      active: false,
+      windowId: 1,
+      incognito: false,
+      selected: false,
+      discarded: false,
+      autoDiscardable: true,
+      groupId: -1,
+      frozen: false,
+      lastAccessed: 0,
+    } as chrome.tabs.Tab);
     expect(activity).toBeGreaterThan(0);
   });
 
@@ -1091,11 +1476,47 @@ describe('tab removal activity tracking', () => {
   });
 
   it('should remove activity record when tab is closed', () => {
-    expect(getLastActivity({ id: 50, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 50,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBeGreaterThan(0);
 
     removeTabActivity(50);
 
-    expect(getLastActivity({ id: 50, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBe(0);
+    expect(
+      getLastActivity({
+        id: 50,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
   });
 
   it('should handle removing non-existent tab gracefully', () => {
@@ -1110,8 +1531,44 @@ describe('tab removal activity tracking', () => {
 
     removeTabActivity(1);
 
-    expect(getLastActivity({ id: 1, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBe(0);
-    expect(getLastActivity({ id: 2, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 } as chrome.tabs.Tab)).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 1,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBe(0);
+    expect(
+      getLastActivity({
+        id: 2,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      } as chrome.tabs.Tab),
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -1357,7 +1814,10 @@ describe('applyCleanupRules edge cases', () => {
     chromeMock.notifications.create.mockImplementation((options: any, callback: any) => {
       if (callback) {
         callback();
-        Object.defineProperty(chrome.runtime, 'lastError', { value: { message: 'Notification failed' }, writable: true });
+        Object.defineProperty(chrome.runtime, 'lastError', {
+          value: { message: 'Notification failed' },
+          writable: true,
+        });
       }
       return Promise.resolve('mock-id');
     });
@@ -1417,7 +1877,13 @@ describe('applyCleanupRules edge cases', () => {
       notificationsEnabled: false,
     });
     chromeMock.tabs.query.mockResolvedValue([
-      { id: 1, url: 'https://example.com', active: false, pinned: true, lastAccessed: now - 120000 },
+      {
+        id: 1,
+        url: 'https://example.com',
+        active: false,
+        pinned: true,
+        lastAccessed: now - 120000,
+      },
       { id: 2, url: 'https://other.com', active: false, pinned: false, lastAccessed: now - 120000 },
     ]);
 
@@ -1541,10 +2007,18 @@ describe('chrome.runtime.onMessage runCleanup', () => {
 });
 
 // Capture event listeners registered during module import
-const createdListener = chromeMock.tabs.onCreated.addListener.mock.calls[0][0] as (...args: any[]) => any;
-const removedListener = chromeMock.tabs.onRemoved.addListener.mock.calls[0][0] as (...args: any[]) => any;
-const storageChangedListener = chromeMock.storage.onChanged.addListener.mock.calls[0][0] as (...args: any[]) => any;
-const commandListener = chromeMock.commands.onCommand.addListener.mock.calls[0][0] as (...args: any[]) => any;
+const createdListener = chromeMock.tabs.onCreated.addListener.mock.calls[0][0] as (
+  ...args: any[]
+) => any;
+const removedListener = chromeMock.tabs.onRemoved.addListener.mock.calls[0][0] as (
+  ...args: any[]
+) => any;
+const storageChangedListener = chromeMock.storage.onChanged.addListener.mock.calls[0][0] as (
+  ...args: any[]
+) => any;
+const commandListener = chromeMock.commands.onCommand.addListener.mock.calls[0][0] as (
+  ...args: any[]
+) => any;
 
 describe('chrome.tabs.onCreated listener', () => {
   beforeEach(() => {
@@ -1582,11 +2056,47 @@ describe('chrome.tabs.onRemoved listener', () => {
 
   it('should remove tab activity record', () => {
     updateTabActivity(42);
-    expect(getLastActivity({ id: 42, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 })).toBeGreaterThan(0);
+    expect(
+      getLastActivity({
+        id: 42,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      }),
+    ).toBeGreaterThan(0);
 
     removedListener(42);
     // After removal, should fallback to lastAccessed
-    expect(getLastActivity({ id: 42, url: "", title: "", index: 0, pinned: false, highlighted: false, active: false, windowId: 1, incognito: false, selected: false, discarded: false, autoDiscardable: true, groupId: -1, frozen: false, lastAccessed: 0 })).toBe(0);
+    expect(
+      getLastActivity({
+        id: 42,
+        url: '',
+        title: '',
+        index: 0,
+        pinned: false,
+        highlighted: false,
+        active: false,
+        windowId: 1,
+        incognito: false,
+        selected: false,
+        discarded: false,
+        autoDiscardable: true,
+        groupId: -1,
+        frozen: false,
+        lastAccessed: 0,
+      }),
+    ).toBe(0);
   });
 });
 

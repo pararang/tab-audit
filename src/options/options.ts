@@ -21,8 +21,7 @@ export function isValidSettings(data: unknown): data is Partial<Settings> {
       settings.theme === 'system') &&
     (settings.whitelist === undefined || Array.isArray(settings.whitelist)) &&
     (settings.blacklist === undefined || Array.isArray(settings.blacklist)) &&
-    (settings.whitelistedTabGroups === undefined ||
-      Array.isArray(settings.whitelistedTabGroups)) &&
+    (settings.whitelistedTabGroups === undefined || Array.isArray(settings.whitelistedTabGroups)) &&
     (settings.notificationsEnabled === undefined ||
       typeof settings.notificationsEnabled === 'boolean')
   );
@@ -56,7 +55,9 @@ export function getFormElements(): OptionsFormElements | null {
   const theme = document.getElementById('theme') as HTMLSelectElement;
   const whitelist = document.getElementById('whitelist') as HTMLTextAreaElement;
   const blacklist = document.getElementById('blacklist') as HTMLTextAreaElement;
-  const whitelistedTabGroups = document.getElementById('whitelisted-tab-groups') as HTMLTextAreaElement;
+  const whitelistedTabGroups = document.getElementById(
+    'whitelisted-tab-groups',
+  ) as HTMLTextAreaElement;
   const notificationsEnabled = document.getElementById('notifications-enabled') as HTMLInputElement;
   const backupBtn = document.getElementById('backup-btn') as HTMLButtonElement;
   const restoreBtn = document.getElementById('restore-btn') as HTMLButtonElement;
@@ -120,11 +121,17 @@ export async function saveSettingsFromForm(elements: OptionsFormElements): Promi
 
   // Validate maxTabs: must be a positive integer, fall back to default if invalid
   const parsedMaxTabs = parseInt(elements.maxTabs.value);
-  const maxTabs = Number.isInteger(parsedMaxTabs) && parsedMaxTabs >= 0 ? parsedMaxTabs : DEFAULT_SETTINGS.maxTabs;
+  const maxTabs =
+    Number.isInteger(parsedMaxTabs) && parsedMaxTabs >= 0
+      ? parsedMaxTabs
+      : DEFAULT_SETTINGS.maxTabs;
 
   // Validate idleTimeout: must be a non-negative integer, fall back to default if invalid
   const parsedIdleTimeout = parseInt(elements.idleTimeout.value);
-  const idleTimeout = Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout >= 0 ? parsedIdleTimeout : DEFAULT_SETTINGS.idleTimeout;
+  const idleTimeout =
+    Number.isInteger(parsedIdleTimeout) && parsedIdleTimeout >= 0
+      ? parsedIdleTimeout
+      : DEFAULT_SETTINGS.idleTimeout;
 
   const newSettings: Settings = {
     enabled: currentSettings.enabled,

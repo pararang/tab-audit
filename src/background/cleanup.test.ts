@@ -215,7 +215,12 @@ describe('Rule 5 — Duplicate tabs', () => {
   });
 
   it('keeps active tab over duplicates', () => {
-    const activeTab = tab({ id: 1, active: true, lastAccessed: Date.now() - 10_000, url: 'https://example.com' });
+    const activeTab = tab({
+      id: 1,
+      active: true,
+      lastAccessed: Date.now() - 10_000,
+      url: 'https://example.com',
+    });
     const inactiveTab = tab({ id: 2, lastAccessed: Date.now(), url: 'https://example.com' });
     const r = run({ tabs: [activeTab, inactiveTab] });
     expect(r.tabIdsToClose).toEqual([2]);

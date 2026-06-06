@@ -102,13 +102,31 @@ describe('applyTheme', () => {
   });
 
   it('should resolve system preference to light', () => {
-    mockMatchMedia.mockReturnValue({ matches: false, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
     applyTheme('system');
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
   it('should resolve system preference to dark', () => {
-    mockMatchMedia.mockReturnValue({ matches: true, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    mockMatchMedia.mockReturnValue({
+      matches: true,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
     applyTheme('system');
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -630,7 +648,8 @@ describe('generateQRCode', () => {
       qrUrl,
     };
 
-    const longUrl = 'https://example.com/very/long/path/with/many/segments/and/query/parameters?foo=bar&baz=qux';
+    const longUrl =
+      'https://example.com/very/long/path/with/many/segments/and/query/parameters?foo=bar&baz=qux';
     chromeMock.tabs.query.mockResolvedValue([{ url: longUrl }]);
 
     await generateQRCode(elements);

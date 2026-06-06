@@ -92,13 +92,31 @@ describe('applyTheme', () => {
   });
 
   it('should resolve system preference to light', () => {
-    mockMatchMedia.mockReturnValue({ matches: false, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
     applyTheme('system');
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
   });
 
   it('should resolve system preference to dark', () => {
-    mockMatchMedia.mockReturnValue({ matches: true, media: '', onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    mockMatchMedia.mockReturnValue({
+      matches: true,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
     applyTheme('system');
     expect(mockDocumentElement?.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
   });
@@ -664,7 +682,9 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the backup click handler
-      const backupCall = (mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'click');
+      const backupCall = (
+        mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'click');
       if (backupCall) {
         const backupHandler = backupCall[1];
         await backupHandler();
@@ -733,9 +753,9 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the restore button click handler (second button with click listener)
-      const clickCalls = (mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
-        (call: unknown) => (call as unknown[])[0] === 'click',
-      );
+      const clickCalls = (
+        mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.filter((call: unknown) => (call as unknown[])[0] === 'click');
       if (clickCalls.length >= 2) {
         const restoreHandler = clickCalls[1][1];
         restoreHandler();
@@ -801,7 +821,9 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -874,7 +896,9 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -948,7 +972,9 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {

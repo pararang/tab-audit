@@ -91,7 +91,11 @@ let warningActive = false;
  * Collects Chrome data, delegates to pure computeCleanup(), then applies results.
  * Called periodically by alarm and on various Chrome events.
  */
+let cleanupInProgress = false;
+
 export async function applyCleanupRules() {
+  if (cleanupInProgress) return;
+  cleanupInProgress = true;
   try {
     const settings = await getSettings();
     if (!settings.enabled) return;
@@ -142,7 +146,7 @@ export async function applyCleanupRules() {
               if (chrome.runtime.lastError) {
                 console.warn('Notification error:', chrome.runtime.lastError.message);
               }
-            }
+            },
           );
         }
       }
@@ -180,12 +184,14 @@ export async function applyCleanupRules() {
             if (chrome.runtime.lastError) {
               console.warn('Notification error:', chrome.runtime.lastError.message);
             }
-          }
+          },
         );
       }
     }
   } catch (error) {
     console.error('Error in applyCleanupRules:', error);
+  } finally {
+    cleanupInProgress = false;
   }
 }
 
