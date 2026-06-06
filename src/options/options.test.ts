@@ -1708,7 +1708,7 @@ describe('initOptions', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
-    });
+    } as any);
     chromeMock.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS });
     chromeMock.storage.local.get.mockResolvedValueOnce({
       whitelist: [],
@@ -1793,8 +1793,7 @@ describe('initOptions', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
-    });
-
+    } as any);
     const newVersionBackup = JSON.stringify({
       version: 999,
       settings: { idleTimeout: 30 },
@@ -1876,7 +1875,7 @@ describe('initOptions', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
-    });
+    } as any);
 
     const importData = JSON.stringify({
       settings: { enabled: true, idleTimeout: 45 },
@@ -1958,7 +1957,7 @@ describe('initOptions', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
-    });
+    } as any);
 
     // Old-format import without enabled field
     const importData = JSON.stringify({ idleTimeout: 45 });
