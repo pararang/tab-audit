@@ -1,9 +1,9 @@
 // @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import './__mocks__/chrome';
+import { applyTheme } from '../shared/theme';
+import { getDomain } from '../shared/domain';
 import {
-  applyTheme,
-  getDomain,
   getTabStats,
   getPopupElements,
   updateTabCount,

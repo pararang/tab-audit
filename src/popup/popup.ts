@@ -1,30 +1,7 @@
 import { getSettings, saveSettings } from '../shared/settings';
+import { getDomain } from '../shared/domain';
+import { applyTheme } from '../shared/theme';
 import QRCode from 'qrcode';
-
-/**
- * Applies the theme to the document.
- * @param theme - 'light', 'dark', or 'system'
- */
-export function applyTheme(theme: 'light' | 'dark' | 'system'): void {
-  let resolvedTheme = theme;
-  if (theme === 'system') {
-    resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  document.documentElement.setAttribute('data-theme', resolvedTheme);
-}
-
-/**
- * Gets domain from URL.
- * @param url - The URL to extract domain from
- * @returns The domain name or empty string
- */
-export function getDomain(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return '';
-  }
-}
 
 /**
  * Gets statistics about current tabs.

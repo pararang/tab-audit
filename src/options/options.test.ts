@@ -3,8 +3,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock Chrome APIs and DOM before importing the module
 import './__mocks__/chrome';
+import { applyTheme } from '../shared/theme';
 import {
-  applyTheme,
   isValidSettings,
   getFormElements,
   loadSettingsToForm,
