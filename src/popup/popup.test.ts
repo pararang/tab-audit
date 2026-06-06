@@ -310,7 +310,7 @@ describe('updateTabCount', () => {
       qrUrl: null as unknown as HTMLElement,
     };
 
-    chromeMock.tabs.query.mockImplementation((_query: any, callback: any) => {
+    chromeMock.tabs.query.mockImplementation((_query: unknown, callback: (...args: unknown[]) => void) => {
       callback([{ id: 1 } as chrome.tabs.Tab, { id: 2 } as chrome.tabs.Tab, { id: 3 } as chrome.tabs.Tab]);
     });
 
@@ -330,7 +330,7 @@ describe('updateTabCount', () => {
       qrUrl: null as unknown as HTMLElement,
     };
 
-    chromeMock.tabs.query.mockImplementation((_query: any, callback: any) => {
+    chromeMock.tabs.query.mockImplementation((_query: unknown, callback: (...args: unknown[]) => void) => {
       callback([]);
     });
 

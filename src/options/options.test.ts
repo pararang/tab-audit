@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import type { MockChrome } from '../__test-utils__/chrome-mock';
 
 // Mock Chrome APIs and DOM before importing the module
@@ -62,16 +63,16 @@ vi.stubGlobal(
 vi.stubGlobal('alert', vi.fn());
 
 // Mock window.matchMedia with addEventListener support
-const mockMatchMedia = vi.fn((query) => ({
+const mockMatchMedia = vi.fn((_query: string) => ({
   matches: false,
-  media: query,
+  media: '',
   onchange: null,
   addListener: vi.fn(),
   removeListener: vi.fn(),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
-}));
+})) as unknown as MockInstance<(...args: unknown[]) => void>;
 vi.stubGlobal('window', {
   matchMedia: mockMatchMedia,
 });
@@ -659,7 +660,7 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the backup click handler
-      const backupCall = (mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: any) => call[0] === 'click');
+      const backupCall = (mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown[]) => call[0] === 'click');
       if (backupCall) {
         const backupHandler = backupCall[1];
         await backupHandler();
@@ -786,7 +787,7 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: any) => call[0] === 'change');
+      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown[]) => call[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -854,7 +855,7 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: any) => call[0] === 'change');
+      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown[]) => call[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
@@ -923,7 +924,7 @@ describe('bindEventListeners', () => {
     if (elements) {
       bindEventListeners(elements);
       // Get the file change handler
-      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: any) => call[0] === 'change');
+      const changeCall = (mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>).mock.calls.find((call: unknown[]) => call[0] === 'change');
       if (changeCall) {
         const changeHandler = changeCall[1];
         const mockEvent = {
