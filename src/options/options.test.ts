@@ -1123,7 +1123,7 @@ describe('bindEventListeners', () => {
     }
 
     // Should show error alert
-    expect(global.alert).toHaveBeenCalledWith('Error saving settings');
+    expect(global.alert).toHaveBeenCalledWith('Failed to save settings: Storage write error');
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Error saving settings in options:',
       expect.any(Error),
@@ -1211,9 +1211,7 @@ describe('bindEventListeners', () => {
     }
 
     // Should show import error alert
-    expect(global.alert).toHaveBeenCalledWith(
-      'Error importing settings. Make sure the file is valid JSON.',
-    );
+    expect(global.alert).toHaveBeenCalledWith('Failed to import settings: Storage write error');
     expect(consoleErrorSpy).toHaveBeenCalledWith('Error importing settings:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
