@@ -994,6 +994,279 @@ describe('bindEventListeners', () => {
     expect(global.alert).toHaveBeenCalledWith('Settings restored successfully!');
   });
 
+  it('should include tabActivityMap in backup export', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+    // getSettings() reads from sync (for sync keys) and local (for local list keys)
+    chromeMock.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS });
+    // First call: getSettings() reads local storage for whitelist/blacklist/whitelistedTabGroups
+    chromeMock.storage.local.get.mockResolvedValueOnce({
+      whitelist: [],
+      blacklist: [],
+      whitelistedTabGroups: [],
+    });
+    // Second call: export handler reads local storage for tabsCleanedToday/tabsCleanedDate/tabActivityMap
+    chromeMock.storage.local.get.mockResolvedValueOnce({
+      tabsCleanedToday: 5,
+      tabsCleanedDate: '2025-01-15',
+      tabActivityMap: { '1': 1705300000000, '2': 1705300001000 },
+    });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const backupCall = (
+        mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'click');
+      if (backupCall) {
+        const backupHandler = backupCall[1];
+        await backupHandler();
+      }
+    }
+
+    // Verify chrome.storage.local.get was called with tabActivityMap
+    expect(chromeMock.storage.local.get).toHaveBeenCalledWith([
+      'tabsCleanedToday',
+      'tabsCleanedDate',
+      'tabActivityMap',
+    ]);
+
+    // Verify Blob was created with tabActivityMap in the export data
+    expect(global.Blob).toHaveBeenCalledWith(
+      [
+        JSON.stringify(
+          {
+            settings: DEFAULT_SETTINGS,
+            tabsCleanedToday: 5,
+            tabsCleanedDate: '2025-01-15',
+            tabActivityMap: { '1': 1705300000000, '2': 1705300001000 },
+          },
+          null,
+          2,
+        ),
+      ],
+      { type: 'application/json' },
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should restore tabActivityMap from new-format backup on import', async () => {
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+
+    const newFormatBackup = JSON.stringify({
+      settings: { idleTimeout: 45 },
+      tabsCleanedToday: 10,
+      tabsCleanedDate: '2025-01-20',
+      tabActivityMap: { '100': 1705400000000, '200': 1705400005000 },
+    });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      if (changeCall) {
+        const changeHandler = changeCall[1];
+        const mockEvent = {
+          target: {
+            files: [
+              {
+                text: vi.fn().mockResolvedValue(newFormatBackup),
+              },
+            ],
+          },
+        };
+        await changeHandler(mockEvent);
+      }
+    }
+
+    // Verify tabActivityMap was restored to local storage
+    expect(chromeMock.storage.local.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tabActivityMap: { '100': 1705400000000, '200': 1705400005000 },
+      }),
+    );
+    expect(global.alert).toHaveBeenCalledWith('Settings restored successfully!');
+  });
+
+  it('should default tabActivityMap to empty object when missing from old-format backup', async () => {
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+
+    // Old-format backup: no tabActivityMap field
+    const oldFormatBackup = JSON.stringify({
+      settings: { idleTimeout: 45 },
+      tabsCleanedToday: 3,
+      tabsCleanedDate: '2025-01-10',
+    });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      if (changeCall) {
+        const changeHandler = changeCall[1];
+        const mockEvent = {
+          target: {
+            files: [
+              {
+                text: vi.fn().mockResolvedValue(oldFormatBackup),
+              },
+            ],
+          },
+        };
+        await changeHandler(mockEvent);
+      }
+    }
+
+    // Verify tabActivityMap defaults to {} when missing
+    expect(chromeMock.storage.local.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tabActivityMap: {},
+      }),
+    );
+    expect(global.alert).toHaveBeenCalledWith('Settings restored successfully!');
+  });
+
   it('should listen for system theme changes', async () => {
     const mockForm = {
       addEventListener: vi.fn(),
