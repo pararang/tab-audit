@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { MockChrome } from '../__test-utils__/chrome-mock';
-import './__mocks__/chrome';
+import '../shared/__mocks__/chrome';
 const chromeMock = chrome as unknown as MockChrome;
 import { applyTheme } from '../shared/theme';
 import { getDomain } from '../shared/domain';
