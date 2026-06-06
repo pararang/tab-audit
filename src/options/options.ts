@@ -2,6 +2,11 @@ import { getSettings, saveSettings, DEFAULT_SETTINGS, Settings } from '../shared
 import { applyTheme } from '../shared/theme';
 
 /**
+ * Export format version for future migration support.
+ */
+const EXPORT_VERSION = 1;
+
+/**
  * Validates imported settings.
  * @param data - The parsed JSON data
  * @returns True if valid settings object
@@ -13,15 +18,23 @@ export function isValidSettings(data: unknown): data is Partial<Settings> {
   const settings = data as Record<string, unknown>;
   return (
     (settings.enabled === undefined || typeof settings.enabled === 'boolean') &&
-    (settings.idleTimeout === undefined || typeof settings.idleTimeout === 'number') &&
-    (settings.maxTabs === undefined || typeof settings.maxTabs === 'number') &&
+    (settings.idleTimeout === undefined ||
+      (typeof settings.idleTimeout === 'number' && settings.idleTimeout >= 0)) &&
+    (settings.maxTabs === undefined ||
+      (typeof settings.maxTabs === 'number' && settings.maxTabs >= 0)) &&
     (settings.theme === undefined ||
       settings.theme === 'light' ||
       settings.theme === 'dark' ||
       settings.theme === 'system') &&
-    (settings.whitelist === undefined || Array.isArray(settings.whitelist)) &&
-    (settings.blacklist === undefined || Array.isArray(settings.blacklist)) &&
-    (settings.whitelistedTabGroups === undefined || Array.isArray(settings.whitelistedTabGroups)) &&
+    (settings.whitelist === undefined ||
+      (Array.isArray(settings.whitelist) &&
+        settings.whitelist.every((item) => typeof item === 'string'))) &&
+    (settings.blacklist === undefined ||
+      (Array.isArray(settings.blacklist) &&
+        settings.blacklist.every((item) => typeof item === 'string'))) &&
+    (settings.whitelistedTabGroups === undefined ||
+      (Array.isArray(settings.whitelistedTabGroups) &&
+        settings.whitelistedTabGroups.every((item) => typeof item === 'string'))) &&
     (settings.notificationsEnabled === undefined ||
       typeof settings.notificationsEnabled === 'boolean')
   );
@@ -186,6 +199,7 @@ export function bindEventListeners(elements: OptionsFormElements): void {
         tabActivityMap?: Record<string, number>;
       };
       const exportData = {
+        version: EXPORT_VERSION,
         settings,
         tabsCleanedToday: localData.tabsCleanedToday ?? 0,
         tabsCleanedDate: localData.tabsCleanedDate ?? new Date().toISOString().split('T')[0],
@@ -197,7 +211,7 @@ export function bindEventListeners(elements: OptionsFormElements): void {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tabclean-settings-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `tab-audit-settings-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -227,15 +241,27 @@ export function bindEventListeners(elements: OptionsFormElements): void {
         ? (rawParsed as { settings: Record<string, unknown> }).settings
         : rawParsed;
 
+      // Version check: warn if export version is newer than what we support
+      if (
+        isNewFormat &&
+        typeof rawParsed.version === 'number' &&
+        rawParsed.version > EXPORT_VERSION
+      ) {
+        alert(
+          `Warning: This settings file was exported with a newer version of Tab Audit (export version ${rawParsed.version}). Some settings may not be restored correctly.`,
+        );
+      }
+
       if (!isValidSettings(data)) {
         alert('Invalid settings file format');
         return;
       }
 
-      // Apply defaults for missing fields
+      // Apply defaults for missing fields, always use imported enabled state when present
       const fullSettings: Settings = {
         ...DEFAULT_SETTINGS,
         ...data,
+        enabled: data.enabled ?? DEFAULT_SETTINGS.enabled,
         whitelist: data.whitelist || [],
         blacklist: data.blacklist || [],
         whitelistedTabGroups: data.whitelistedTabGroups || [],
