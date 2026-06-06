@@ -132,7 +132,12 @@ export async function generateQRCode(elements: PopupElements): Promise<void> {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-    if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+    if (
+      !tab ||
+      !tab.url ||
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://')
+    ) {
       elements.qrUrl.textContent = 'Cannot generate QR for this page';
       return;
     }
@@ -159,13 +164,17 @@ export async function generateQRCode(elements: PopupElements): Promise<void> {
  * @param elements - Popup elements
  */
 export async function handleToggle(elements: PopupElements): Promise<void> {
-  const currentSettings = await getSettings();
-  const newEnabled = !currentSettings.enabled;
-  await saveSettings({ enabled: newEnabled });
-  updateButton(elements, newEnabled);
+  try {
+    const currentSettings = await getSettings();
+    const newEnabled = !currentSettings.enabled;
+    await saveSettings({ enabled: newEnabled });
+    updateButton(elements, newEnabled);
 
-  if (newEnabled) {
-    chrome.runtime.sendMessage({ action: 'runCleanup' });
+    if (newEnabled) {
+      chrome.runtime.sendMessage({ action: 'runCleanup' });
+    }
+  } catch (error) {
+    console.error('Error toggling auto-clean:', error);
   }
 }
 
@@ -180,10 +189,16 @@ export async function initPopup(): Promise<void> {
     return;
   }
 
-  // Load initial state
-  const settings = await getSettings();
-  updateButton(elements, settings.enabled);
-  applyTheme(settings.theme);
+  try {
+    // Load initial state
+    const settings = await getSettings();
+    updateButton(elements, settings.enabled);
+    applyTheme(settings.theme);
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    // Default to disabled if settings can't be read
+    updateButton(elements, false);
+  }
 
   // Update tab count and stats on load
   updateTabCount(elements);
