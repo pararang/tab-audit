@@ -7,7 +7,7 @@
 | File | Purpose |
 |------|---------|
 | `index.ts` | Cleanup engine + Chrome event listeners |
-| `index.test.ts` | Integration tests using `createTestPlatform()` |
+| `index.test.ts` | Integration tests with global chrome mocks |
 | `__mocks__/` | Chrome API mocks for testing |
 
 ## Key Functions
@@ -50,4 +50,4 @@
 
 ## Anti-Patterns
 
-- **This module uses `chrome.*` API directly** — legacy design. New integrations should go through port/adapter pattern.
+- **This module uses `chrome.*` API directly** — shared helpers abstract pure logic where possible.

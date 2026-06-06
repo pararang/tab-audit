@@ -27,5 +27,5 @@
 
 ## Gotchas
 
-- Popup reads `chrome.storage.sync` directly — does NOT use `StoragePort` adapter
+- Popup reads `chrome.storage.sync` directly — shared `getSettings()`/`saveSettings()` in `settings.ts` abstract storage calls
 - QR code rendering uses HTML Canvas API
