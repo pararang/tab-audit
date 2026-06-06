@@ -132,7 +132,12 @@ export async function generateQRCode(elements: PopupElements): Promise<void> {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-    if (!tab || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+    if (
+      !tab ||
+      !tab.url ||
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://')
+    ) {
       elements.qrUrl.textContent = 'Cannot generate QR for this page';
       return;
     }
