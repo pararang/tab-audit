@@ -65,25 +65,25 @@ describe('getSettings', () => {
     });
   });
 
-  it('should handle storage error gracefully', async () => {
+  it('should throw on storage error instead of returning defaults', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage error'));
     chromeMock.storage.local.get.mockResolvedValue({});
 
-    const settings = await getSettings();
+    await expect(getSettings()).rejects.toThrow('Storage error');
 
-    expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
-  it('should handle storage error with different error types', async () => {
+  it('should throw on storage error with different error types', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     chromeMock.storage.sync.get.mockRejectedValue(new Error('Quota exceeded'));
     chromeMock.storage.local.get.mockResolvedValue({});
 
-    const settings = await getSettings();
+    await expect(getSettings()).rejects.toThrow('Quota exceeded');
 
-    expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
@@ -136,21 +136,33 @@ describe('saveSettings error handling', () => {
   });
 
   it('should propagate storage errors', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage error'));
 
     await expect(saveSettings({ enabled: true })).rejects.toThrow('Storage error');
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should propagate quota exceeded errors', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     chromeMock.storage.sync.set.mockRejectedValue(new Error('QuotaExceededError'));
 
     await expect(saveSettings({ maxTabs: 200 })).rejects.toThrow('QuotaExceededError');
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should propagate local storage errors', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     chromeMock.storage.local.set.mockRejectedValue(new Error('Local storage error'));
 
     await expect(saveSettings({ whitelist: ['test.com'] })).rejects.toThrow('Local storage error');
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle invalid settings object', async () => {
@@ -191,6 +203,16 @@ describe('saveSettings', () => {
     expect(chromeMock.storage.sync.set).toHaveBeenCalledWith({
       enabled: false,
     });
+  });
+
+  it('should throw on storage error', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage error'));
+
+    await expect(saveSettings({ enabled: true })).rejects.toThrow('Storage error');
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should save domain lists to local storage', async () => {

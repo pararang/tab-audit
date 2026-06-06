@@ -64,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
  * @param syncStore - Sync storage backend (defaults to chrome.storage.sync)
  * @param localStore - Local storage backend (defaults to chrome.storage.local)
  * @returns Promise resolving to current settings
+ * @throws Error if storage read fails
  */
 export async function getSettings(
   syncStore?: SettingsStorage,
@@ -80,7 +81,7 @@ export async function getSettings(
     return { ...DEFAULT_SETTINGS, ...syncResult, ...localResult };
   } catch (error) {
     console.error('Error getting settings:', error);
-    return DEFAULT_SETTINGS;
+    throw error;
   }
 }
 
@@ -112,8 +113,13 @@ export async function saveSettings(
     }
   }
 
-  await Promise.all([
-    Object.keys(syncItems).length > 0 ? sync.set(syncItems) : Promise.resolve(),
-    Object.keys(localItems).length > 0 ? local.set(localItems) : Promise.resolve(),
-  ]);
+  try {
+    await Promise.all([
+      Object.keys(syncItems).length > 0 ? sync.set(syncItems) : Promise.resolve(),
+      Object.keys(localItems).length > 0 ? local.set(localItems) : Promise.resolve(),
+    ]);
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    throw error;
+  }
 }

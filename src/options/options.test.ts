@@ -1053,6 +1053,169 @@ describe('bindEventListeners', () => {
     // Should call addEventListener on matchMedia for theme change detection
     expect(mockAddEventListener).toHaveBeenCalledWith('change', expect.any(Function));
   });
+
+  it('should handle form submit error when saving settings fails', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '30',
+      checked: true,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: 'light',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+    // getSettings succeeds (for saveSettingsFromForm's getSettings call)
+    chromeMock.storage.sync.get.mockResolvedValue(DEFAULT_SETTINGS);
+    // saveSettings fails (storage.sync.set rejects) → saveSettingsFromForm throws
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage write error'));
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      // Get the form submit handler
+      const submitCall = (
+        mockForm.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'submit');
+      if (submitCall) {
+        const submitHandler = submitCall[1];
+        const mockEvent = { preventDefault: vi.fn() };
+        await submitHandler(mockEvent);
+      }
+    }
+
+    // Should show error alert
+    expect(global.alert).toHaveBeenCalledWith('Failed to save settings: Storage write error');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Error saving settings in options:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should handle import error when saveSettings fails', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+    const mockRestoreFile = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockRestoreFile,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+    // saveSettings fails (storage.sync.set rejects) → throws in import handler
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage write error'));
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      // Get the file change handler from mockRestoreFile
+      const changeCall = (
+        mockRestoreFile.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      if (changeCall) {
+        const changeHandler = changeCall[1];
+        const mockEvent = {
+          target: {
+            files: [
+              {
+                text: vi.fn().mockResolvedValue('{"idleTimeout": 45}'),
+              },
+            ],
+          },
+        };
+        await changeHandler(mockEvent);
+      }
+    }
+
+    // Should show import error alert
+    expect(global.alert).toHaveBeenCalledWith('Failed to import settings: Storage write error');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error importing settings:', expect.any(Error));
+
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 describe('initOptions', () => {
@@ -1119,5 +1282,68 @@ describe('initOptions', () => {
 
     await initOptions();
     expect(chromeMock.storage.sync.get).toHaveBeenCalled();
+  });
+
+  it('should catch loadSettingsToForm error and populate form with defaults', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+    // Make getSettings (storage.sync.get) reject so loadSettingsToForm throws
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage read error'));
+
+    await initOptions();
+
+    // Should show alert about using defaults
+    expect(global.alert).toHaveBeenCalledWith('Failed to load settings. Using defaults.');
+    // Should populate form with default values
+    expect(mockSelect.value).toBe(DEFAULT_SETTINGS.theme);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading settings:', expect.any(Error));
+
+    consoleErrorSpy.mockRestore();
   });
 });

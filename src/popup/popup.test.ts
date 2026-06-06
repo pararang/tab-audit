@@ -516,6 +516,49 @@ describe('handleToggle', () => {
     expect(mockElements.toggleButton.className).toBe('disabled');
     expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled();
   });
+
+  it('should handle getSettings error gracefully', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockElements: PopupElements = {
+      tabCount: {} as HTMLElement,
+      cleanedCount: {} as HTMLElement,
+      topDomain: {} as HTMLElement,
+      toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
+      settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
+    };
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Storage read error'));
+
+    await handleToggle(mockElements);
+
+    expect(consoleError).toHaveBeenCalledWith('Error getting settings:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error toggling auto-clean:', expect.any(Error));
+    expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('should handle saveSettings error gracefully', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockElements: PopupElements = {
+      tabCount: {} as HTMLElement,
+      cleanedCount: {} as HTMLElement,
+      topDomain: {} as HTMLElement,
+      toggleButton: { textContent: '', className: '' } as HTMLButtonElement,
+      settingsButton: null,
+      qrCanvas: null as unknown as HTMLCanvasElement,
+      qrUrl: null as unknown as HTMLElement,
+    };
+    chromeMock.storage.sync.get.mockResolvedValue({ enabled: false });
+    chromeMock.storage.sync.set.mockRejectedValue(new Error('Storage write error'));
+
+    await handleToggle(mockElements);
+
+    expect(consoleError).toHaveBeenCalledWith('Error saving settings:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error toggling auto-clean:', expect.any(Error));
+    expect(chromeMock.runtime.sendMessage).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });
 
 describe('initPopup', () => {
@@ -559,6 +602,39 @@ describe('initPopup', () => {
 
     expect(mockDocumentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
     expect(chromeMock.storage.sync.get).toHaveBeenCalled();
+  });
+
+  it('should default to disabled button when getSettings fails', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockTabCount = { textContent: '' } as HTMLElement;
+    const mockCleanedCount = { textContent: '' } as HTMLElement;
+    const mockTopDomain = { textContent: '' } as HTMLElement;
+    const mockToggleButton = {
+      textContent: '',
+      className: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'tab-count': mockTabCount,
+        'cleaned-count': mockCleanedCount,
+        'top-domain': mockTopDomain,
+        'toggle-clean': mockToggleButton,
+        'open-settings': null as unknown as HTMLElement,
+      };
+      return elements[id] || null;
+    });
+    chromeMock.storage.sync.get.mockRejectedValue(new Error('Settings read error'));
+    chromeMock.tabs.query.mockResolvedValue([]);
+
+    await initPopup();
+
+    expect(consoleError).toHaveBeenCalledWith('Error getting settings:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error loading settings:', expect.any(Error));
+    expect(mockToggleButton.textContent).toBe('Enable Auto Clean');
+    expect(mockToggleButton.className).toBe('disabled');
+    consoleError.mockRestore();
   });
 });
 
