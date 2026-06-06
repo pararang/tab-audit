@@ -1,4 +1,18 @@
 /**
+ * Minimal storage abstraction for settings persistence.
+ * Default implementation uses chrome.storage.sync; can be swapped for testing.
+ */
+export interface SettingsStorage {
+  get(keys: string[]): Promise<Record<string, unknown>>;
+  set(items: Record<string, unknown>): Promise<void>;
+}
+
+const defaultStorage: SettingsStorage = {
+  get: (keys) => chrome.storage.sync.get(keys),
+  set: (items) => chrome.storage.sync.set(items),
+};
+
+/**
  * User settings for the tab auto-clean extension.
  */
 export interface Settings {
@@ -36,16 +50,15 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 /**
- * Retrieves user settings from Chrome storage.
+ * Retrieves user settings from storage.
  * Merges stored settings with defaults for missing values.
+ * @param storage - Storage backend (defaults to chrome.storage.sync)
  * @returns Promise resolving to current settings
- * @example
- * const settings = await getSettings();
- * if (settings.enabled) { ... }
  */
-export async function getSettings(): Promise<Settings> {
+export async function getSettings(storage?: SettingsStorage): Promise<Settings> {
+  const store = storage ?? defaultStorage;
   try {
-    const result = await chrome.storage.sync.get(Object.keys(DEFAULT_SETTINGS));
+    const result = await store.get(Object.keys(DEFAULT_SETTINGS));
     return { ...DEFAULT_SETTINGS, ...result };
   } catch (error) {
     console.error('Error getting settings:', error);
@@ -54,16 +67,19 @@ export async function getSettings(): Promise<Settings> {
 }
 
 /**
- * Saves partial settings to Chrome storage.
+ * Saves partial settings to storage.
  * Only updates specified fields, leaves others unchanged.
  * @param settings - Partial settings object to save
+ * @param storage - Storage backend (defaults to chrome.storage.sync)
  * @returns Promise resolving when complete
- * @example
- * await saveSettings({ enabled: true, maxTabs: 100 });
  */
-export async function saveSettings(settings: Partial<Settings>): Promise<void> {
+export async function saveSettings(
+  settings: Partial<Settings>,
+  storage?: SettingsStorage,
+): Promise<void> {
+  const store = storage ?? defaultStorage;
   try {
-    await chrome.storage.sync.set(settings);
+    await store.set(settings);
   } catch (error) {
     console.error('Error saving settings:', error);
   }
