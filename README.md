@@ -200,40 +200,40 @@ src/
 
 ## Contributing
 
-This project uses **bd** (bead) for task and issue tracking. All work should be tracked through bd.
+This project uses **GitHub Issues** for task and issue tracking. All interactions with the repository should use `gh` CLI.
 
-### Task Tracking with bd
+### Task Tracking with GitHub Issues
 
 ```bash
 # List all open issues
-bd list
+gh issue list
+
+# View issue details
+gh issue view <number>
 
 # Create a new issue
-bd create "Brief description of the task"
+gh issue create --title "Brief description of the task" --body "Details..."
 
-# Update issue status
-bd update <issue-id> --status in_progress
+# Comment on an issue
+gh issue comment <number> --body "Update on progress..."
 
 # Close/resolve an issue
-bd close <issue-id>
+gh issue close <number>
 
-# Search for issues
-bd search "keyword"
-
-# Show issue details
-bd show <issue-id>
+# Reopen an issue
+gh issue reopen <number>
 ```
 
 ### Workflow
 
-1. Before starting work, check `bd list` for available tasks
-2. Update issue status to `in_progress` when you begin
+1. Before starting work, check `gh issue list` for available tasks
+2. Comment on the issue with `gh issue comment <number> --body "Taking this on"` when you begin
 3. Make small, atomic commits after each logical change
 4. Use conventional commits: `feat:`, `fix:`, `refactor:`, etc.
 5. Work directly on the `main` branch for development tasks
 6. Run linter and formatter before committing
 7. Write descriptive commit messages explaining "why" not just "what"
-8. Close issues with `bd close <issue-id>` when complete
+8. Close issues with `gh issue close <number>` when complete
 
 ## License
 
