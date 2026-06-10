@@ -1,6 +1,6 @@
 {
   "name": "tab-audit",
-  "version": "1.5.0",
+  "version": "1.4.1",
   "description": "Chrome extension that automatically audits and closes tabs to free memory: idle timeout, duplicate detection, domain filtering, and tab limits",
   "scripts": {
     "build": "webpack --mode=development",
