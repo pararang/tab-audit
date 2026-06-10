@@ -1102,6 +1102,7 @@ describe('bindEventListeners', () => {
       [
         JSON.stringify(
           {
+            version: 1,
             settings: DEFAULT_SETTINGS,
             tabsCleanedToday: 5,
             tabsCleanedDate: '2025-01-15',
@@ -1505,6 +1506,9 @@ describe('initOptions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetElementById.mockReset();
+    // Re-establish default mock implementations after clearAllMocks
+    chromeMock.storage.sync.set.mockResolvedValue(undefined);
+    chromeMock.storage.local.set.mockResolvedValue(undefined);
   });
 
   it('should return early when form elements are not found', async () => {
@@ -1624,5 +1628,373 @@ describe('initOptions', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading settings:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
+  });
+
+  // --- Fix #54: value validation tests ---
+
+  it('should return false for negative idleTimeout', () => {
+    expect(isValidSettings({ idleTimeout: -1 })).toBe(false);
+  });
+
+  it('should return false for negative maxTabs', () => {
+    expect(isValidSettings({ maxTabs: -5 })).toBe(false);
+  });
+
+  it('should return true for zero idleTimeout', () => {
+    expect(isValidSettings({ idleTimeout: 0 })).toBe(true);
+  });
+
+  it('should return true for zero maxTabs', () => {
+    expect(isValidSettings({ maxTabs: 0 })).toBe(true);
+  });
+
+  it('should return false for whitelist with non-string items', () => {
+    expect(isValidSettings({ whitelist: ['a.com', 123] })).toBe(false);
+  });
+
+  it('should return false for blacklist with non-string items', () => {
+    expect(isValidSettings({ blacklist: [true] })).toBe(false);
+  });
+
+  it('should return false for whitelistedTabGroups with non-string items', () => {
+    expect(isValidSettings({ whitelistedTabGroups: ['Work', null] })).toBe(false);
+  });
+
+  it('should return true for empty arrays in whitelist/blacklist/whitelistedTabGroups', () => {
+    expect(isValidSettings({ whitelist: [], blacklist: [], whitelistedTabGroups: [] })).toBe(true);
+  });
+
+  // --- Fix #53: version field in export ---
+
+  it('should include version field in backup export', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as any);
+    chromeMock.storage.sync.get.mockResolvedValue({ ...DEFAULT_SETTINGS });
+    chromeMock.storage.local.get.mockResolvedValueOnce({
+      whitelist: [],
+      blacklist: [],
+      whitelistedTabGroups: [],
+    });
+    chromeMock.storage.local.get.mockResolvedValueOnce({
+      tabsCleanedToday: 0,
+      tabsCleanedDate: '2025-01-15',
+      tabActivityMap: {},
+    });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const backupCall = (
+        mockButton.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'click');
+      if (backupCall) {
+        const backupHandler = backupCall[1];
+        await backupHandler();
+      }
+    }
+
+    // Verify Blob was created with version field in the export data
+    const blobCall = (global.Blob as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    const blobContent = JSON.parse(blobCall[0][0]);
+    expect(blobContent).toHaveProperty('version', 1);
+    expect(blobContent).toHaveProperty('settings');
+    expect(blobContent).toHaveProperty('tabsCleanedToday');
+    expect(blobContent).toHaveProperty('tabsCleanedDate');
+    expect(blobContent).toHaveProperty('tabActivityMap');
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  // --- Fix #53: version check on import ---
+
+  it('should warn when importing a file with newer version', async () => {
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as any);
+    const newVersionBackup = JSON.stringify({
+      version: 999,
+      settings: { idleTimeout: 30 },
+    });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      if (changeCall) {
+        const changeHandler = changeCall[1];
+        const mockEvent = {
+          target: {
+            files: [
+              {
+                text: vi.fn().mockResolvedValue(newVersionBackup),
+              },
+            ],
+          },
+        };
+        await changeHandler(mockEvent);
+      }
+    }
+
+    // Should show version warning AND success alert
+    expect(global.alert).toHaveBeenCalledWith(
+      expect.stringContaining('Warning: This settings file was exported with a newer version'),
+    );
+    expect(global.alert).toHaveBeenCalledWith('Settings restored successfully!');
+  });
+
+  // --- Fix #55: import preserves enabled state ---
+
+  it('should use enabled=true from imported file', async () => {
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as any);
+
+    const importData = JSON.stringify({
+      settings: { enabled: true, idleTimeout: 45 },
+    });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      if (changeCall) {
+        const changeHandler = changeCall[1];
+        const mockEvent = {
+          target: {
+            files: [
+              {
+                text: vi.fn().mockResolvedValue(importData),
+              },
+            ],
+          },
+        };
+        await changeHandler(mockEvent);
+      }
+    }
+
+    // Verify enabled=true was saved to storage
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+      }),
+    );
+    expect(global.alert).toHaveBeenCalledWith('Settings restored successfully!');
+  });
+
+  it('should default enabled to false when not present in imported file', async () => {
+    const mockForm = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLFormElement;
+    const mockInput = {
+      value: '',
+      checked: false,
+      addEventListener: vi.fn(),
+    } as unknown as HTMLInputElement;
+    const mockSelect = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLSelectElement;
+    const mockTextarea = {
+      value: '',
+      addEventListener: vi.fn(),
+    } as unknown as HTMLTextAreaElement;
+    const mockButton = {
+      addEventListener: vi.fn(),
+    } as unknown as HTMLButtonElement;
+
+    mockGetElementById.mockImplementation((id) => {
+      const elements: Record<string, Element> = {
+        'options-form': mockForm,
+        'idle-timeout': mockInput,
+        'max-tabs': mockInput,
+        theme: mockSelect,
+        whitelist: mockTextarea,
+        blacklist: mockTextarea,
+        'whitelisted-tab-groups': mockTextarea,
+        'notifications-enabled': mockInput,
+        'backup-btn': mockButton,
+        'restore-btn': mockButton,
+        'restore-file': mockInput,
+      };
+      return elements[id] || null;
+    });
+    mockMatchMedia.mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as any);
+
+    // Old-format import without enabled field
+    const importData = JSON.stringify({ idleTimeout: 45 });
+
+    const elements = getFormElements();
+    if (elements) {
+      bindEventListeners(elements);
+      const changeCall = (
+        mockInput.addEventListener as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find((call: unknown) => (call as unknown[])[0] === 'change');
+      if (changeCall) {
+        const changeHandler = changeCall[1];
+        const mockEvent = {
+          target: {
+            files: [
+              {
+                text: vi.fn().mockResolvedValue(importData),
+              },
+            ],
+          },
+        };
+        await changeHandler(mockEvent);
+      }
+    }
+
+    // Verify enabled defaults to false (from DEFAULT_SETTINGS)
+    expect(chromeMock.storage.sync.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      }),
+    );
+    expect(global.alert).toHaveBeenCalledWith('Settings restored successfully!');
   });
 });
